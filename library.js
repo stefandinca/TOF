@@ -1,0 +1,369 @@
+// Firebase Configuration - Using environment variables
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// Global state
+let allGames = [];
+let filteredGames = [];
+
+// DOM Elements
+const gamesGrid = document.getElementById('gamesGrid');
+const loading = document.getElementById('loading');
+const noResults = document.getElementById('noResults');
+const resultsCount = document.getElementById('resultsCount');
+const searchInput = document.getElementById('searchInput');
+const playerFilter = document.getElementById('playerFilter');
+const modeFilter = document.getElementById('modeFilter');
+const categoryFilter = document.getElementById('categoryFilter');
+const sortSelect = document.getElementById('sortSelect');
+const resetFiltersBtn = document.getElementById('resetFilters');
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  loadGames();
+  setupEventListeners();
+});
+
+// Load games from Firestore
+async function loadGames() {
+  try {
+    loading.classList.remove('hidden');
+    gamesGrid.innerHTML = '';
+
+    const snapshot = await db.collection('games').get();
+    allGames = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    filteredGames = [...allGames];
+    sortGames();
+    renderGames();
+  } catch (error) {
+    console.error('Error loading games:', error);
+    gamesGrid.innerHTML = `
+      <div class="text-center py-12" style="grid-column: 1 / -1;">
+        <p class="text-xl font-semibold" style="color: var(--accent);">Error loading games</p>
+        <p class="text-sm py-3">Please check your Firebase configuration</p>
+      </div>
+    `;
+  } finally {
+    loading.classList.add('hidden');
+  }
+}
+
+// Setup event listeners
+function setupEventListeners() {
+  searchInput.addEventListener('input', debounce(applyFilters, 300));
+  playerFilter.addEventListener('change', applyFilters);
+  modeFilter.addEventListener('change', applyFilters);
+  categoryFilter.addEventListener('change', applyFilters);
+  sortSelect.addEventListener('change', () => {
+    sortGames();
+    renderGames();
+  });
+  resetFiltersBtn.addEventListener('click', resetFilters);
+}
+
+// Apply filters
+function applyFilters() {
+  const searchTerm = searchInput.value.toLowerCase().trim();
+  const playerCount = playerFilter.value;
+  const mode = modeFilter.value;
+  const category = categoryFilter.value;
+
+  filteredGames = allGames.filter(game => {
+    // Search filter
+    if (searchTerm) {
+      const searchIndex = game.searchIndex || '';
+      if (!searchIndex.includes(searchTerm)) {
+        return false;
+      }
+    }
+
+    // Player count filter
+    if (playerCount) {
+      if (playerCount === '1') {
+        if (game.playerCountMin !== 1) return false;
+      } else if (playerCount === '2') {
+        if (!(game.playerCountMin <= 2 && (game.playerCountMax === '2' || parseInt(game.playerCountMax) >= 2))) {
+          return false;
+        }
+      } else if (playerCount === '3-4') {
+        const maxPlayers = parseInt(game.playerCountMax) || 0;
+        if (!(game.playerCountMin <= 4 && maxPlayers >= 3)) {
+          return false;
+        }
+      } else if (playerCount === '5+') {
+        const maxPlayers = parseInt(game.playerCountMax) || 0;
+        if (maxPlayers < 5 && !game.playerCountMax.includes('+')) {
+          return false;
+        }
+      }
+    }
+
+    // Game mode filter
+    if (mode) {
+      const gameMode = game.gameMode || '';
+      if (!gameMode.toLowerCase().includes(mode.toLowerCase())) {
+        return false;
+      }
+    }
+
+    // Category filter
+    if (category) {
+      if (game.inventoryCategory !== category) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  sortGames();
+  renderGames();
+}
+
+// Sort games
+function sortGames() {
+  const sortBy = sortSelect.value;
+
+  filteredGames.sort((a, b) => {
+    if (sortBy === 'title') {
+      return (a.title || '').localeCompare(b.title || '');
+    } else if (sortBy === 'rating') {
+      return (b.rating || 0) - (a.rating || 0);
+    } else if (sortBy === 'playTimeMin') {
+      return (a.playTimeMin || 0) - (b.playTimeMin || 0);
+    } else if (sortBy === 'playerCountMin') {
+      return (a.playerCountMin || 0) - (b.playerCountMin || 0);
+    }
+    return 0;
+  });
+}
+
+// Reset filters
+function resetFilters() {
+  searchInput.value = '';
+  playerFilter.value = '';
+  modeFilter.value = '';
+  categoryFilter.value = '';
+  sortSelect.value = 'title';
+  applyFilters();
+}
+
+// Render games
+function renderGames() {
+  gamesGrid.innerHTML = '';
+
+  if (filteredGames.length === 0) {
+    noResults.classList.remove('hidden');
+    resultsCount.classList.add('hidden');
+    return;
+  }
+
+  noResults.classList.add('hidden');
+  resultsCount.classList.remove('hidden');
+  resultsCount.textContent = `Showing ${filteredGames.length} game${filteredGames.length !== 1 ? 's' : ''}`;
+
+  filteredGames.forEach(game => {
+    const card = createGameCard(game);
+    gamesGrid.appendChild(card);
+  });
+}
+
+// Create game card
+function createGameCard(game) {
+  const card = document.createElement('div');
+  card.className = 'game-card';
+  card.onclick = () => showGameDetails(game);
+
+  const playerInfo = formatPlayerCount(game.playerCountMin, game.playerCountMax);
+  const timeInfo = formatPlayTime(game.playTimeMin, game.playTimeMax);
+
+  card.innerHTML = `
+    <div class="game-image">
+      ${game.imageUrl ?
+        `<img src="${game.imageUrl}" alt="${game.title}" loading="lazy" />` :
+        '<div class="game-image-placeholder">🎲</div>'
+      }
+    </div>
+    <h3 class="game-title">${game.title || 'Untitled Game'}</h3>
+    <p class="game-publisher">${game.publisher || 'Unknown Publisher'}</p>
+    <div class="game-meta">
+      ${game.inventoryCategory ? `<span class="meta-badge category">${game.inventoryCategory}</span>` : ''}
+      ${game.gameMode ? `<span class="meta-badge mode">${game.gameMode}</span>` : ''}
+      ${playerInfo ? `<span class="meta-badge">👥 ${playerInfo}</span>` : ''}
+      ${timeInfo ? `<span class="meta-badge">⏱️ ${timeInfo}</span>` : ''}
+      ${game.rating ? `<span class="meta-badge rating">⭐ ${game.rating}</span>` : ''}
+    </div>
+  `;
+
+  return card;
+}
+
+// Format player count
+function formatPlayerCount(min, max) {
+  if (!min && !max) return '';
+  if (!max || max === min) return `${min}`;
+  return `${min}-${max}`;
+}
+
+// Format play time
+function formatPlayTime(min, max) {
+  if (!min && !max) return '';
+  if (!max || max === min) return `${min}m`;
+  return `${min}-${max}m`;
+}
+
+// Show game details in modal
+function showGameDetails(game) {
+  const modal = document.getElementById('gameModal');
+  const modalBody = document.getElementById('modalBody');
+
+  const playerInfo = formatPlayerCount(game.playerCountMin, game.playerCountMax);
+  const timeInfo = formatPlayTime(game.playTimeMin, game.playTimeMax);
+
+  modalBody.innerHTML = `
+    <h2 class="modal-game-title">${game.title || 'Untitled Game'}</h2>
+    <p class="modal-game-publisher">${game.publisher || 'Unknown Publisher'}</p>
+
+    ${game.imageUrl ? `
+      <div class="modal-game-image">
+        <img src="${game.imageUrl}" alt="${game.title}" />
+      </div>
+    ` : ''}
+
+    ${game.description ? `
+      <div class="detail-section">
+        <div class="detail-label">Description</div>
+        <div class="detail-value">${game.description}</div>
+      </div>
+    ` : ''}
+
+    <div class="detail-grid">
+      ${playerInfo ? `
+        <div class="detail-item">
+          <div class="detail-item-label">Players</div>
+          <div class="detail-item-value">${playerInfo}</div>
+        </div>
+      ` : ''}
+      ${timeInfo ? `
+        <div class="detail-item">
+          <div class="detail-item-label">Play Time</div>
+          <div class="detail-item-value">${timeInfo}</div>
+        </div>
+      ` : ''}
+      ${game.age ? `
+        <div class="detail-item">
+          <div class="detail-item-label">Age</div>
+          <div class="detail-item-value">${game.age}</div>
+        </div>
+      ` : ''}
+      ${game.rating ? `
+        <div class="detail-item">
+          <div class="detail-item-label">Rating</div>
+          <div class="detail-item-value">⭐ ${game.rating}</div>
+        </div>
+      ` : ''}
+      ${game.complexity ? `
+        <div class="detail-item">
+          <div class="detail-item-label">Complexity</div>
+          <div class="detail-item-value">${game.complexity}</div>
+        </div>
+      ` : ''}
+      ${game.inventoryCategory ? `
+        <div class="detail-item">
+          <div class="detail-item-label">Category</div>
+          <div class="detail-item-value">${game.inventoryCategory}</div>
+        </div>
+      ` : ''}
+    </div>
+
+    ${game.gameMode ? `
+      <div class="detail-section">
+        <div class="detail-label">Game Mode</div>
+        <div class="detail-value">${game.gameMode}</div>
+      </div>
+    ` : ''}
+
+    ${game.theme ? `
+      <div class="detail-section">
+        <div class="detail-label">Theme</div>
+        <div class="detail-value">${game.theme}</div>
+      </div>
+    ` : ''}
+
+    ${game.gameMechanics ? `
+      <div class="detail-section">
+        <div class="detail-label">Game Mechanics</div>
+        <div class="detail-value">${game.gameMechanics}</div>
+      </div>
+    ` : ''}
+
+    ${game.tags ? `
+      <div class="detail-section">
+        <div class="detail-label">Tags</div>
+        <div class="detail-value">${game.tags}</div>
+      </div>
+    ` : ''}
+
+    ${game.notes ? `
+      <div class="detail-section">
+        <div class="detail-label">Notes</div>
+        <div class="detail-value">${game.notes}</div>
+      </div>
+    ` : ''}
+
+    <div class="game-links">
+      ${game.rulesUrl ? `
+        <a href="${game.rulesUrl}" target="_blank" class="game-link-btn">📖 View Rules</a>
+      ` : ''}
+      <button class="game-link-btn" onclick="closeModal()">Close</button>
+    </div>
+  `;
+
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+// Close modal
+function closeModal() {
+  const modal = document.getElementById('gameModal');
+  modal.classList.add('hidden');
+  document.body.style.overflow = 'auto';
+}
+
+// Expose closeModal to global scope for inline onclick handlers
+window.closeModal = closeModal;
+
+// Utility: Debounce
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeModal();
+  }
+});

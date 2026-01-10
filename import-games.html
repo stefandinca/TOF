@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Import Games to Firebase</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #180F1E;
+      color: #F7E0CB;
+    }
+    .container {
+      background: rgba(88, 10, 205, 0.1);
+      padding: 30px;
+      border-radius: 16px;
+      border: 2px solid #580ACD;
+    }
+    h1 {
+      color: #F05E37;
+      margin-bottom: 20px;
+    }
+    button {
+      background: #580ACD;
+      color: #F7E0CB;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+    button:hover {
+      background: #F05E37;
+      transform: scale(1.05);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    #status {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      background: rgba(247, 224, 203, 0.05);
+    }
+    .success { color: #4ade80; }
+    .error { color: #f87171; }
+    .info { color: #60a5fa; }
+    input[type="file"] {
+      margin: 20px 0;
+      padding: 10px;
+      background: rgba(247, 224, 203, 0.1);
+      border: 1px solid #580ACD;
+      border-radius: 8px;
+      color: #F7E0CB;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Import Board Games to Firebase</h1>
+    <p>This tool will import the board game library CSV into your Firebase Firestore database.</p>
+
+    <div>
+      <input type="file" id="csvFile" accept=".csv" />
+      <button id="importBtn" onclick="importGames()">Import Games to Firebase</button>
+    </div>
+
+    <div id="status"></div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <!-- Import Games Script -->
+  <script type="module" src="/import-games.js"></script>
+</body>
+</html>
