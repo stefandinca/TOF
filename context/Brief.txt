@@ -1,0 +1,321 @@
+Twist of Fate
+Board Game Library & Inventory System
+Aka Board Game Menu
+Design & Implementation Brief
+
+1. Project Overview
+Twist of Fate requires a Board Game Library system that serves two distinct audiences:
+Customers (Public-Facing UI)
+Browse the in-store board game library to discover games available to play or purchase.
+Staff (Internal UI)
+Manage inventory quantities, add and maintain games, and track inventory changes with accountability.
+This system will integrate into the Twist of Fate website and should feel like a modern board game café discovery experience, not a traditional inventory database.
+The desired baseline experience is similar to:
+https://app.questcentral.ca/games
+with specific enhancements outlined below.
+
+2. Core Goals
+Fast, intuitive browsing for customers
+Simple, low-friction inventory management for staff
+Clear distinction between Library and Retail availability
+Manual control over metadata (auto-scraping override if possible)
+Architected to support future POS / Shopify integration
+
+3. Scope & Phasing
+Phase 1 (Required for Launch)
+Public Board Game Library browsing experience
+Help us find a boardgame tool
+Staff inventory management UI
+Spreadsheet-driven data model
+Inventory audit logging
+Explicitly Out of Scope (Phase 1)
+Game reservations
+Table checkout / “in use” tracking
+Customer accounts
+Member-only filters
+Barcode scanning
+Per-copy condition tracking
+
+4. Data Source & Structure
+The system will be built from a Board Game Library spreadsheet, which serves as:
+Initial data import to Firebase
+Ongoing admin reference (not real-time once live)
+Ability to Export live library to spreadsheet for historical tracking
+Each game record includes (not exhaustive):
+Game Title
+Game ID (Internal)
+Quantity Library (used to compute/tag library availability)
+Quantity Retail (used to compute/tag retail availability)
+Publisher
+Description
+Min / Max Players
+Min / Max Playtime
+Minimum Age
+Inventory Category (Base Game or Expansion)
+Game Mode (Multi Select)
+Description
+User Rating (This can be pulled from Boardgame geek)
+Genre (Multi-select)
+Complexity (This can be pulled from Boardgame geek “Weight” rating
+Vibe (Multi Select)
+Theme (multi-select)
+Game Mechanics (Multi-select)
+Tags (multi-select)
+Notes
+Image URL (Better to have our own image library? Or scrape from Boargame geek)?
+Rules URL (We are thinking we can scan in user manuals but not sure where they would be stored)
+Multi-select fields are represented as selectable chips in the UI.
+
+5. Customer UI / UX Requirements (Public)
+UX Principles
+The experience should feel:
+Fast (instant feedback, no reloads)
+Inviting (encourages exploration)
+Low-friction (minimal cognitive load)
+Clean with subtle brand flair
+Mobile-first design is required.
+
+Search (Top Priority)
+A single, prominent search bar must:
+Update results in real time as the user types
+Require no “Search” or “Apply” button
+Search should match against:
+Title
+Publisher
+Category / Genre
+Theme
+Mechanics
+Tags
+Partial and fuzzy matches should be supported.
+
+Filters
+Filters apply instantly and stack cumulatively.
+Core filters:
+Player Count (min/max)
+Playtime (min/max)
+Age
+Category / Genre
+Mechanics
+Theme
+Tags
+Availability toggles (highly visible):
+✅ Available in Library
+🛒 Available for Purchase
+Active filters should appear as removable chips.
+
+Game Card Design (Grid View)
+Each game card includes:
+Cover image (primary visual anchor)
+Game title
+Metadata row (players, time, age)
+Availability badges:
+Library
+Retail
+Cards should be fully clickable with subtle tap/hover feedback.
+If a game exists in both library and retail, both badges must display.
+
+Sorting
+Lightweight sorting controls:
+Alphabetical (A–Z / Z–A)
+Player count
+Playtime
+Complexity (if present)
+
+Game Detail Page
+Includes:
+Large cover image
+Title + availability badges
+Icon-based metadata rows
+Description
+Mechanics / Themes / Tags (as chips)
+Optional links:
+Rules PDF
+How-to-Play video
+Navigation should preserve filters and scroll position.
+
+Empty States
+If no results match:
+Friendly message
+Suggest clearing or adjusting filters
+Never show a blank screen
+
+5A. “What Should We Play?” View (Customer UI)
+Purpose
+Provide a guided, menu-style discovery experience for customers who may feel overwhelmed by filters or unfamiliar with board games.
+This view should feel similar to ordering from a café menu:
+Approachable
+Conversational
+Fast
+Confidence-building
+This should be visually fun and potentially have some animation/Imagery 
+
+Entry Point
+Accessible from the main Board Game Library page via a clearly labeled button or tab
+ Example:
+
+
+“What Should We Play?”
+
+
+This feature should be optional and not required to browse the full library
+
+
+
+Menu Prompt Structure
+The What Should We Play? tool presents a small set of plain-language prompts that guide customers to appropriate games.
+Inputs should update results in real time and should not require a submit button.
+
+Prompt 1: Group Dynamics
+“We are a group of…” “our youngest player is … years old”
+Numeric input or stepper
+Supports a practical range (e.g., 2–10+ players)
+Supports a practical Age range (eg 3-99)
+Filters out any games that dont support group size or minimum age requirements
+
+
+
+Prompt 2: Experience Level
+“Our board game experience is…”
+Selectable options:
+Beginner
+Intermediate
+Advanced
+Enthusiast
+
+
+These selections should map internally to the game’s Complexity / Weight value in the dataset.
+Example - Beginner should be in the 0-2 range, Intermediate 0-3, Advanced 0-4 and Enthusiast 0-5
+
+Prompt 3: Time Available
+“We want to play for…”
+Numeric input in minutes
+ or
+
+
+Preset selectable ranges:
+
+
+Up to 30 minutes
+30–45 minutes
+45–60 minutes
+60+ minutes
+
+
+This value should filter against Min / Max Playtime fields.
+
+Prompt 4: Game Style Preference
+“We want something…”
+Selectable options:
+Co-operative
+Competitive
+Social
+
+
+This should map to Game Mode.
+
+Prompt 5: Vibe Selection
+“Our vibe is…”
+Multi-select list of Vibe tags
+Tags must be sourced directly from the dataset (not hard-coded)
+
+
+Examples (illustrative only):
+Party
+Thinky
+Strategic
+Silly
+Fast-paced
+Narrative
+Cozy
+Chaotic
+
+
+Note: “Vibe” will exist as a dedicated category in the Board Game Library spreadsheet.
+
+Results Behavior
+Results display using the same game cards as the main library view
+
+
+Results update instantly as inputs change
+
+
+Users may:
+
+
+Adjust inputs without restarting
+Clear individual selections
+Exit back to the full library view at any time
+
+
+
+Design & UX Expectations
+The experience should feel:
+
+
+Friendly
+Non-intimidating
+Lightly playful (without being gimmicky)
+
+
+Avoid long forms or multi-step wizards
+Target completion time: under 30 seconds
+
+Explicit Non-Goals (Phase 1)
+No saving of preferences
+No personalization
+No customer accounts
+No recommendations outside the existing library
+
+
+
+Instruction to Designer
+Treat the What Should We Play? tool as a first-time customer helper that reduces decision fatigue and makes choosing a game feel easy and fun.
+
+6. Staff UI (Internal)
+Design Direction
+Utility-first
+Table-based views
+Optimized for speed and clarity
+Branding optional / minimal
+
+Core Capabilities
+Staff can:
+Add new games
+Remove Games
+Edit metadata
+Adjust:
+Quantity Library
+Quantity Retail
+
+Inventory Adjustment Flow
+When quantities are changed manually:
+Staff must select a reason code:
+Sold (manual) -Would like this to be tied into shopify/POS if possible in the future
+Damaged
+Missing
+New Purchase
+Adjustment / Audit
+Optional notes field
+
+Audit Log (Required)
+Every inventory change must record:
+Game ID
+Field changed
+Old value → New value
+Reason code
+Staff user
+Timestamp
+Audit logs must be viewable per-game and globally.
+
+7. Future Considerations (Not Required Now)
+POS integration (auto-decrement retail inventory)
+Shopify sync
+Barcode scanning
+Per-copy condition tracking
+The system should be architected so these can be added later without refactoring the core data model.
+
+9. Final Instruction to Designer
+When in doubt, default to:
+fewer clicks, instant feedback, and visible state changes.
+If a feature is ambiguous, clarity and usability take precedence over complexity.
+

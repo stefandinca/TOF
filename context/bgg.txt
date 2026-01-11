@@ -1,0 +1,67 @@
+What's Been Created                                                                                                                                                                                                                                              
+  1. BGG Enrichment Script (scripts/enrich-from-bgg.js)                                                                                                                                                                                                          
+                                                                                                                                                                                                                                                                 
+  A Node.js script that:
+  - Searches BoardGameGeek for each game in your library
+  - Fetches detailed information including images, descriptions, ratings, and metadata
+  - Updates your Firestore database with enriched data
+  - Respects BGG's rate limits (5 seconds between requests)
+  - Includes comprehensive error handling and progress tracking
+
+  2. Test Script (scripts/test-bgg-api.js)
+
+  A standalone test to verify your BGG API connection works before running the full enrichment.
+
+  3. Detailed Documentation (scripts/README.md)
+
+  Complete guide covering:
+  - BGG API registration process
+  - Firebase Admin SDK setup
+  - Script usage and command-line options
+  - Troubleshooting common issues
+  - Best practices
+
+  4. Updated Configuration
+
+  - Added BGG API dependencies to package.json
+  - Updated .env.example with BGG API token configuration
+  - Added npm scripts for easy execution
+
+  Important: BGG API Registration Required
+
+  BoardGameGeek recently changed their API to require authentication (they call it the "XML APIcalypse"). Before you can use the script, you need to:
+
+  1. Register for API access at https://boardgamegeek.com/applications
+  2. Fill in your application details:
+    - Name: "Twist of Fate Board Game Library"
+    - Description: "Internal tool to enrich game library with BGG data"
+    - Redirect URL: http://localhost
+  3. Wait for approval (usually quick)
+  4. Generate an API token from your application page
+  5. Add the token to your .env file as BGG_API_TOKEN
+
+  You'll also need to add your Firebase Admin SDK credentials to the .env file (see scripts/README.md for details).
+
+  Next Steps
+
+  1. Install dependencies (already done):
+  npm install
+  2. Register for BGG API access (see above)
+  3. Configure your .env file with:
+    - BGG_API_TOKEN - from BGG
+    - FIREBASE_SERVICE_ACCOUNT - from Firebase Console
+  4. Test the connection:
+  npm run test-bgg
+  5. Run the enrichment (start with a small batch):
+  npm run enrich-games -- --limit 5
+  6. Enrich all games:
+  npm run enrich-games
+
+  The full enrichment for ~180 games will take approximately 30 minutes due to rate limiting.
+
+  Sources
+
+  - https://boardgamegeek.com/wiki/page/BGG_XML_API2
+  - https://boardgamegeek.com/using_the_xml_api
+  - https://boardgamegeek.com/thread/3525319/registration-to-use-the-xml-api-and-obtain-soon-to
+  - https://boardgamegeek.com/thread/3577944/the-xml-apicalypse-is-coming/page/3

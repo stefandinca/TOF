@@ -6,9 +6,16 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "enrich-games": "node scripts/enrich-from-bgg.js",
+    "test-bgg": "node scripts/test-bgg-api.js"
   },
   "devDependencies": {
     "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "dotenv": "^16.4.0",
+    "xml2js": "^0.6.2"
   }
 }

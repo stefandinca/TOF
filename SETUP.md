@@ -250,6 +250,31 @@ service cloud.firestore {
 - Use a local web server (see Step 7)
 - Don't open HTML files directly with `file://`
 
+## Optional: Enrich Games with BoardGameGeek Data
+
+You can automatically fetch images, descriptions, and ratings from BoardGameGeek to enhance your game library.
+
+See the detailed guide in [scripts/README.md](scripts/README.md) for full instructions.
+
+**Quick Setup:**
+
+1. Register for BGG API access at [boardgamegeek.com/applications](https://boardgamegeek.com/applications)
+2. Add your `BGG_API_TOKEN` and `FIREBASE_SERVICE_ACCOUNT` to `.env`
+3. Run the enrichment script:
+   ```bash
+   # Test with a few games first
+   npm run enrich-games -- --limit 5
+
+   # Or enrich all games missing data
+   npm run enrich-games
+   ```
+
+This will automatically add:
+- Game images (for card and modal views)
+- Descriptions from BGG
+- BGG ratings and complexity scores
+- Additional metadata
+
 ## Next Steps (Future Phases)
 
 Potential Phase 2 features:
