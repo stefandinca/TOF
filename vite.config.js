@@ -8,7 +8,8 @@ export default defineConfig({
       input: {
         main: 'index.html',
         library: 'library.html',
-        import: 'import-games.html'
+        import: 'import-games.html',
+        admin: 'admin.html'
       }
     }
   },

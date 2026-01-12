@@ -196,7 +196,7 @@ function createGameCard(game) {
     <div class="game-image">
       ${game.imageUrl ?
         `<img src="${game.imageUrl}" alt="${game.title}" loading="lazy" />` :
-        '<div class="game-image-placeholder">🎲</div>'
+        '<div class="game-image-placeholder"><span class="iconify" data-icon="ant-design:trophy-outlined" style="font-size: 3rem;"></span></div>'
       }
     </div>
     <h3 class="game-title">${game.title || 'Untitled Game'}</h3>
@@ -204,9 +204,9 @@ function createGameCard(game) {
     <div class="game-meta">
       ${game.inventoryCategory ? `<span class="meta-badge category">${game.inventoryCategory}</span>` : ''}
       ${game.gameMode ? `<span class="meta-badge mode">${game.gameMode}</span>` : ''}
-      ${playerInfo ? `<span class="meta-badge">👥 ${playerInfo}</span>` : ''}
-      ${timeInfo ? `<span class="meta-badge">⏱️ ${timeInfo}</span>` : ''}
-      ${game.rating ? `<span class="meta-badge rating">⭐ ${game.rating}</span>` : ''}
+      ${playerInfo ? `<span class="meta-badge"><span class="iconify" data-icon="ant-design:team-outlined"></span> ${playerInfo}</span>` : ''}
+      ${timeInfo ? `<span class="meta-badge"><span class="iconify" data-icon="ant-design:clock-circle-outlined"></span> ${timeInfo}</span>` : ''}
+      ${game.rating ? `<span class="meta-badge rating"><span class="iconify" data-icon="ant-design:star-filled"></span> ${game.rating}</span>` : ''}
     </div>
   `;
 
@@ -274,7 +274,7 @@ function showGameDetails(game) {
       ${game.rating ? `
         <div class="detail-item">
           <div class="detail-item-label">Rating</div>
-          <div class="detail-item-value">⭐ ${game.rating}</div>
+          <div class="detail-item-value"><span class="iconify" data-icon="ant-design:star-filled"></span> ${game.rating}</div>
         </div>
       ` : ''}
       ${game.complexity ? `
@@ -328,7 +328,9 @@ function showGameDetails(game) {
 
     <div class="game-links">
       ${game.rulesUrl ? `
-        <a href="${game.rulesUrl}" target="_blank" class="game-link-btn">📖 View Rules</a>
+        <a href="${game.rulesUrl}" target="_blank" class="game-link-btn">
+          <span class="iconify" data-icon="ant-design:book-outlined"></span> View Rules
+        </a>
       ` : ''}
       <button class="game-link-btn" onclick="closeModal()">Close</button>
     </div>

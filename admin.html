@@ -1,0 +1,319 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="img/tof_icon.png">
+  <link href="./styles.css" rel="stylesheet">
+  <link href="./admin.css" rel="stylesheet">
+  <title>Admin - Twist of Fate Cafe</title>
+</head>
+<body>
+  <!-- Sign In Screen -->
+  <div id="signInScreen" class="auth-screen hidden">
+    <div class="auth-container">
+      <a href="index.html">
+        <img src="img/TOF_Logo_small.png" alt="Twist of Fate" class="auth-logo"/>
+      </a>
+      <h1 class="auth-title">Admin Access Required</h1>
+      <p class="auth-subtitle">Sign in with your authorized Google account to continue</p>
+      <button id="signInButton" class="auth-button">
+        <span class="iconify btn-icon" data-icon="ant-design:google-outlined"></span>
+        Sign in with Google
+      </button>
+    </div>
+  </div>
+
+  <!-- Access Denied Screen -->
+  <div id="accessDenied" class="auth-screen hidden">
+    <div class="auth-container">
+      <a href="index.html">
+        <img src="img/TOF_Logo_small.png" alt="Twist of Fate" class="auth-logo"/>
+      </a>
+      <h1 class="auth-title denied">Access Denied</h1>
+      <p class="auth-subtitle">Your account (<span id="deniedEmail"></span>) is not authorized for admin access.</p>
+      <p class="auth-info">Contact the administrator to request access.</p>
+      <button id="signOutButtonDenied" class="auth-button secondary">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- Admin Interface -->
+  <div id="adminInterface" class="hidden">
+    <!-- Compact Sticky Header -->
+    <header class="admin-header">
+      <div class="header-section header-left">
+        <a href="index.html" class="header-logo-link">
+          <img src="img/TOF_Logo_small.png" alt="Twist of Fate" class="header-logo"/>
+        </a>
+        <h1 class="header-title">Game Library Admin</h1>
+      </div>
+
+      <div class="header-section header-center">
+        <div class="header-nav">
+          <button id="addNewGameButton" class="header-btn primary">
+            <span class="iconify btn-icon" data-icon="ant-design:plus-outlined"></span>
+            <span class="btn-text">New Game</span>
+          </button>
+          <a href="import-games.html" class="header-btn">
+            <span class="iconify btn-icon" data-icon="ant-design:upload-outlined"></span>
+            <span class="btn-text">Import</span>
+          </a>
+          <a href="library.html" target="_blank" class="header-btn">
+            <span class="iconify btn-icon" data-icon="ant-design:book-outlined"></span>
+            <span class="btn-text">Library</span>
+          </a>
+        </div>
+
+        <div class="header-form-actions" id="headerFormActions">
+          <button type="submit" form="gameForm" id="saveButtonHeader" class="header-btn success">
+            <span class="iconify btn-icon" data-icon="ant-design:save-outlined"></span>
+            <span class="btn-text">Save</span>
+          </button>
+          <button type="button" id="cancelButtonHeader" class="header-btn secondary">
+            <span class="iconify btn-icon" data-icon="ant-design:close-outlined"></span>
+            <span class="btn-text">Cancel</span>
+          </button>
+          <button type="button" id="deleteButtonHeader" class="header-btn danger hidden">
+            <span class="iconify btn-icon" data-icon="ant-design:delete-outlined"></span>
+            <span class="btn-text">Delete</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="header-section header-right">
+        <span class="user-email" id="userEmail"></span>
+        <button id="signOutButton" class="header-btn secondary">Sign Out</button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="admin-content">
+      <!-- Game List Sidebar -->
+      <div class="game-list-panel">
+        <div class="panel-header">
+          <h2>Games</h2>
+          <input type="text" id="gameSearch" class="search-input" placeholder="Search games..."/>
+        </div>
+        <div id="gameListLoading" class="loading-state hidden">
+          <div class="loading-spinner"></div>
+          <p>Loading games...</p>
+        </div>
+        <div id="gameList" class="game-list"></div>
+      </div>
+
+      <!-- Game Form Panel -->
+      <div class="game-form-panel">
+        <form id="gameForm" class="game-form">
+          <!-- Basic Information Section -->
+          <div class="form-section">
+            <h3 class="section-title">Basic Information</h3>
+            <div class="form-row">
+              <div class="form-group required">
+                <label for="title">Game Title</label>
+                <input type="text" id="title" name="title" required/>
+              </div>
+              <div class="form-group required">
+                <label for="gameId">Game ID</label>
+                <input type="text" id="gameId" name="gameId" required placeholder="TOF-BG-0001"/>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group required">
+                <label for="publisher">Publisher</label>
+                <input type="text" id="publisher" name="publisher" required/>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="imageUrl">Image URL</label>
+                <input type="url" id="imageUrl" name="imageUrl" placeholder="https://..."/>
+                <div id="imagePreview" class="image-preview">
+                  <div class="placeholder">🎲 No image</div>
+                </div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" rows="4"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gameplay Details Section -->
+          <div class="form-section">
+            <h3 class="section-title">Gameplay Details</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="playerCountMin">Min Players</label>
+                <input type="number" id="playerCountMin" name="playerCountMin" min="1"/>
+              </div>
+              <div class="form-group">
+                <label for="playerCountMax">Max Players</label>
+                <input type="text" id="playerCountMax" name="playerCountMax" placeholder="4 or 5+"/>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="playTimeMin">Min Play Time (minutes)</label>
+                <input type="number" id="playTimeMin" name="playTimeMin" min="1"/>
+              </div>
+              <div class="form-group">
+                <label for="playTimeMax">Max Play Time (minutes)</label>
+                <input type="number" id="playTimeMax" name="playTimeMax" min="1"/>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="age">Recommended Age</label>
+                <input type="text" id="age" name="age" placeholder="10+"/>
+              </div>
+              <div class="form-group">
+                <label for="gameMode">Game Mode</label>
+                <select id="gameMode" name="gameMode">
+                  <option value="">Select mode...</option>
+                  <option value="Competitive">Competitive</option>
+                  <option value="Cooperative">Cooperative</option>
+                  <option value="Solo">Solo</option>
+                  <option value="Team-Based">Team-Based</option>
+                  <option value="Conversation">Conversation</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="rating">Rating (0-10)</label>
+                <input type="number" id="rating" name="rating" min="0" max="10" step="0.1"/>
+              </div>
+              <div class="form-group">
+                <label for="complexity">Complexity</label>
+                <input type="text" id="complexity" name="complexity" placeholder="2.5/5"/>
+              </div>
+            </div>
+          </div>
+
+          <!-- Categorization Section -->
+          <div class="form-section">
+            <h3 class="section-title">Categorization</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="inventoryCategory">Category</label>
+                <select id="inventoryCategory" name="inventoryCategory">
+                  <option value="">Select category...</option>
+                  <option value="Base Game">Base Game</option>
+                  <option value="Expansion">Expansion</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="type">Type</label>
+                <input type="text" id="type" name="type"/>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="theme">Theme</label>
+                <input type="text" id="theme" name="theme"/>
+              </div>
+              <div class="form-group">
+                <label for="vibe">Vibe</label>
+                <input type="text" id="vibe" name="vibe"/>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="gameMechanics">Game Mechanics</label>
+                <input type="text" id="gameMechanics" name="gameMechanics"/>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="tags">Tags (comma-separated)</label>
+                <input type="text" id="tags" name="tags" placeholder="strategy, family, party"/>
+              </div>
+            </div>
+          </div>
+
+          <!-- Inventory & Admin Section -->
+          <div class="form-section">
+            <h3 class="section-title">Inventory & Admin</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="quantityLibrary">Library Quantity</label>
+                <input type="number" id="quantityLibrary" name="quantityLibrary" min="0"/>
+              </div>
+              <div class="form-group">
+                <label for="quantityRetail">Retail Quantity</label>
+                <input type="number" id="quantityRetail" name="quantityRetail" min="0"/>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="upc">UPC</label>
+                <input type="text" id="upc" name="upc"/>
+              </div>
+              <div class="form-group">
+                <label for="vendor">Vendor</label>
+                <input type="text" id="vendor" name="vendor"/>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="purchaseDate">Purchase Date</label>
+                <input type="date" id="purchaseDate" name="purchaseDate"/>
+              </div>
+              <div class="form-group">
+                <label for="unitCost">Unit Cost</label>
+                <input type="text" id="unitCost" name="unitCost" placeholder="$29.99"/>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="rulesUrl">Rules URL</label>
+                <input type="url" id="rulesUrl" name="rulesUrl" placeholder="https://..."/>
+              </div>
+              <div class="form-group">
+                <label for="playTested">Play Tested</label>
+                <input type="text" id="playTested" name="playTested" placeholder="Yes/No"/>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="notes">Internal Notes</label>
+                <textarea id="notes" name="notes" rows="3"></textarea>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <h2 class="modal-title">Delete Game</h2>
+      <p class="modal-message">Are you sure you want to delete "<span id="deleteGameTitle"></span>"?</p>
+      <p class="modal-warning">This action cannot be undone.</p>
+      <div class="modal-actions">
+        <button id="confirmDeleteButton" class="form-button destructive">Delete</button>
+        <button id="cancelDeleteButton" class="form-button secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Iconify for Ant Design Icons -->
+  <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <!-- Admin Script -->
+  <script type="module" src="admin.js"></script>
+</body>
+</html>

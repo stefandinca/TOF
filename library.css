@@ -1,5 +1,21 @@
 /* Library Custom Styles */
 
+/* Iconify Icons */
+.iconify {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.meta-badge .iconify {
+  margin-right: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.game-link-btn .iconify {
+  margin-right: 0.5rem;
+  font-size: 1rem;
+}
+
 /* Filters Container */
 .filters-container {
   max-width: 1400px;
@@ -163,7 +179,7 @@
 .meta-badge.category {
   background: rgba(88, 10, 205, 0.2);
   border-color: var(--ui);
-  color: var(--ui);
+  color: white;
 }
 
 .meta-badge.mode {

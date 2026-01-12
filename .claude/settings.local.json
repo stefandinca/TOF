@@ -8,7 +8,9 @@
       "Bash(dir:*)",
       "WebSearch",
       "WebFetch(domain:boardgamegeek.com)",
-      "Bash(npm run test-bgg:*)"
+      "Bash(npm run test-bgg:*)",
+      "Bash(node check-env.js:*)",
+      "Bash(findstr:*)"
     ]
   }
 }

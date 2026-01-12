@@ -13,13 +13,15 @@ const firebaseConfig = {
 
 // Initialize Firebase
 let db;
+let auth;
 
 function initializeFirebase() {
   if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
   }
   db = firebase.firestore();
-  return db;
+  auth = firebase.auth();
+  return { db, auth };
 }
 
-export { firebaseConfig, initializeFirebase, db };
+export { firebaseConfig, initializeFirebase, db, auth };
