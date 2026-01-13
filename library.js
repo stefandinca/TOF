@@ -233,6 +233,64 @@ function formatPlayTime(min, max) {
   return `${min}-${max}m`;
 }
 
+// Find similar games based on player count, play time, and age
+function findSimilarGames(currentGame, limit = 4) {
+  const similarGames = allGames
+    .filter(game => game.id !== currentGame.id) // Exclude current game
+    .map(game => {
+      let score = 0;
+
+      // Check player count overlap (weight: 40%)
+      if (currentGame.playerCountMin && game.playerCountMin) {
+        const currentMin = currentGame.playerCountMin;
+        const currentMax = parseInt(currentGame.playerCountMax) || currentGame.playerCountMin;
+        const gameMin = game.playerCountMin;
+        const gameMax = parseInt(game.playerCountMax) || game.playerCountMin;
+
+        // Check if ranges overlap
+        if (gameMin <= currentMax && gameMax >= currentMin) {
+          score += 40;
+        }
+      }
+
+      // Check play time similarity (weight: 30%)
+      if (currentGame.playTimeMin && game.playTimeMin) {
+        const currentAvg = ((currentGame.playTimeMin + (parseInt(currentGame.playTimeMax) || currentGame.playTimeMin)) / 2);
+        const gameAvg = ((game.playTimeMin + (parseInt(game.playTimeMax) || game.playTimeMin)) / 2);
+        const timeDiff = Math.abs(currentAvg - gameAvg);
+
+        // Within 30 minutes = full points, scale down linearly up to 90 minutes
+        if (timeDiff <= 30) {
+          score += 30;
+        } else if (timeDiff <= 90) {
+          score += 30 * (1 - (timeDiff - 30) / 60);
+        }
+      }
+
+      // Check age similarity (weight: 30%)
+      if (currentGame.age && game.age) {
+        const currentAge = parseInt(currentGame.age.replace(/\D/g, '')) || 0;
+        const gameAge = parseInt(game.age.replace(/\D/g, '')) || 0;
+        const ageDiff = Math.abs(currentAge - gameAge);
+
+        // Same age = full points, scale down linearly up to 4 years difference
+        if (ageDiff === 0) {
+          score += 30;
+        } else if (ageDiff <= 4) {
+          score += 30 * (1 - ageDiff / 4);
+        }
+      }
+
+      return { game, score };
+    })
+    .filter(item => item.score > 0) // Only include games with some similarity
+    .sort((a, b) => b.score - a.score) // Sort by similarity score
+    .slice(0, limit) // Limit results
+    .map(item => item.game);
+
+  return similarGames;
+}
+
 // Show game details in full page
 function showGameDetail(game) {
   const gameListView = document.getElementById('gameListView');
@@ -342,14 +400,82 @@ function showGameDetail(game) {
         </div>
       ` : ''}
     </div>
+
+    <!-- Similar Games Section -->
+    <div id="similarGamesSection" class="similar-games-section"></div>
   `;
 
   // Hide list, show detail
   gameListView.classList.add('hidden');
   gameDetailView.classList.remove('hidden');
 
+  // Render similar games
+  renderSimilarGames(game);
+
   // Scroll to top
   window.scrollTo(0, 0);
+}
+
+// Render similar games section
+function renderSimilarGames(currentGame) {
+  const similarGamesSection = document.getElementById('similarGamesSection');
+  const similarGames = findSimilarGames(currentGame, 4);
+
+  if (similarGames.length === 0) {
+    similarGamesSection.innerHTML = '';
+    return;
+  }
+
+  let similarGamesHTML = `
+    <div class="similar-games-header">
+      <h3 class="similar-games-title">Similar Games</h3>
+      <p class="similar-games-subtitle">You might also enjoy these games</p>
+    </div>
+    <div class="similar-games-grid">
+  `;
+
+  similarGames.forEach(game => {
+    const playerInfo = formatPlayerCount(game.playerCountMin, game.playerCountMax);
+    const timeInfo = formatPlayTime(game.playTimeMin, game.playTimeMax);
+
+    similarGamesHTML += `
+      <div class="similar-game-card" data-game-id="${game.id}">
+        <div class="similar-game-image">
+          ${game.imageUrl ?
+            `<img src="${game.imageUrl}" alt="${game.title}" loading="lazy" />` :
+            '<div class="game-image-placeholder"><span class="iconify" data-icon="ant-design:trophy-outlined"></span></div>'
+          }
+        </div>
+        <div class="similar-game-content">
+          <h4 class="similar-game-title">${game.title || 'Untitled Game'}</h4>
+          <p class="similar-game-publisher">${game.publisher || 'Unknown'}</p>
+          <div class="similar-game-meta">
+            ${playerInfo ? `<span class="meta-badge"><span class="iconify" data-icon="ant-design:team-outlined"></span> ${playerInfo}</span>` : ''}
+            ${timeInfo ? `<span class="meta-badge"><span class="iconify" data-icon="ant-design:clock-circle-outlined"></span> ${timeInfo}</span>` : ''}
+            ${game.age ? `<span class="meta-badge">${game.age}</span>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  similarGamesHTML += `
+    </div>
+  `;
+
+  similarGamesSection.innerHTML = similarGamesHTML;
+
+  // Add click event listeners to similar game cards
+  const similarGameCards = similarGamesSection.querySelectorAll('.similar-game-card');
+  similarGameCards.forEach(card => {
+    card.addEventListener('click', () => {
+      const gameId = card.getAttribute('data-game-id');
+      const game = allGames.find(g => g.id === gameId);
+      if (game) {
+        showGameDetail(game);
+      }
+    });
+  });
 }
 
 // Back to game list
