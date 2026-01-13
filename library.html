@@ -72,32 +72,35 @@
     </div>
   </div>
 
-  <!-- Loading State -->
-  <div id="loading" class="flex justify-center py-12">
-    <div class="loading-spinner"></div>
-  </div>
-
-  <!-- Results Count -->
-  <div id="resultsCount" class="text-center text-sm py-3 hidden"></div>
-
-  <!-- Games Grid -->
-  <div id="gamesGrid" class="games-grid"></div>
-
-  <!-- No Results Message -->
-  <div id="noResults" class="text-center py-12 hidden">
-    <p class="text-xl font-semibold">No games found</p>
-    <p class="text-sm py-3">Try adjusting your filters or search terms</p>
-  </div>
-
-  <!-- Game Detail Modal -->
-  <div id="gameModal" class="modal hidden">
-    <div class="modal-overlay" onclick="closeModal()"></div>
-    <div class="modal-content">
-      <button class="modal-close" onclick="closeModal()">
-        <span class="iconify" data-icon="ant-design:close-outlined" style="width: 1.5rem; height: 1.5rem;"></span>
-      </button>
-      <div id="modalBody"></div>
+  <!-- Game List View -->
+  <div id="gameListView">
+    <!-- Loading State -->
+    <div id="loading" class="flex justify-center py-12">
+      <div class="loading-spinner"></div>
     </div>
+
+    <!-- Results Count -->
+    <div id="resultsCount" class="text-center text-sm py-3 hidden"></div>
+
+    <!-- Games Grid -->
+    <div id="gamesGrid" class="games-grid"></div>
+
+    <!-- No Results Message -->
+    <div id="noResults" class="text-center py-12 hidden">
+      <p class="text-xl font-semibold">No games found</p>
+      <p class="text-sm py-3">Try adjusting your filters or search terms</p>
+    </div>
+  </div>
+
+  <!-- Game Detail View -->
+  <div id="gameDetailView" class="game-detail-view hidden">
+    <div class="detail-header">
+      <button id="backButton" class="back-button">
+        <span class="iconify" data-icon="ant-design:arrow-left-outlined"></span>
+        Back to Library
+      </button>
+    </div>
+    <div id="gameDetailContent" class="detail-content"></div>
   </div>
 
   <!-- Footer -->

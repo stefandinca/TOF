@@ -33,6 +33,12 @@ const resetFiltersBtn = document.getElementById('resetFilters');
 document.addEventListener('DOMContentLoaded', () => {
   loadGames();
   setupEventListeners();
+
+  // Back button listener
+  const backButton = document.getElementById('backButton');
+  if (backButton) {
+    backButton.addEventListener('click', showGameList);
+  }
 });
 
 // Load games from Firestore
@@ -187,7 +193,7 @@ function renderGames() {
 function createGameCard(game) {
   const card = document.createElement('div');
   card.className = 'game-card';
-  card.onclick = () => showGameDetails(game);
+  card.onclick = () => showGameDetail(game);
 
   const playerInfo = formatPlayerCount(game.playerCountMin, game.playerCountMax);
   const timeInfo = formatPlayTime(game.playTimeMin, game.playTimeMax);
@@ -227,128 +233,136 @@ function formatPlayTime(min, max) {
   return `${min}-${max}m`;
 }
 
-// Show game details in modal
-function showGameDetails(game) {
-  const modal = document.getElementById('gameModal');
-  const modalBody = document.getElementById('modalBody');
+// Show game details in full page
+function showGameDetail(game) {
+  const gameListView = document.getElementById('gameListView');
+  const gameDetailView = document.getElementById('gameDetailView');
+  const gameDetailContent = document.getElementById('gameDetailContent');
 
   const playerInfo = formatPlayerCount(game.playerCountMin, game.playerCountMax);
   const timeInfo = formatPlayTime(game.playTimeMin, game.playTimeMax);
 
-  modalBody.innerHTML = `
-    <h2 class="modal-game-title">${game.title || 'Untitled Game'}</h2>
-    <p class="modal-game-publisher">${game.publisher || 'Unknown Publisher'}</p>
+  gameDetailContent.innerHTML = `
+    <div class="detail-container">
+      <h2 class="detail-game-title">${game.title || 'Untitled Game'}</h2>
+      <p class="detail-game-publisher">${game.publisher || 'Unknown Publisher'}</p>
 
-    ${game.imageUrl ? `
-      <div class="modal-game-image">
-        <img src="${game.imageUrl}" alt="${game.title}" />
-      </div>
-    ` : ''}
-
-    ${game.description ? `
-      <div class="detail-section">
-        <div class="detail-label">Description</div>
-        <div class="detail-value">${game.description}</div>
-      </div>
-    ` : ''}
-
-    <div class="detail-grid">
-      ${playerInfo ? `
-        <div class="detail-item">
-          <div class="detail-item-label">Players</div>
-          <div class="detail-item-value">${playerInfo}</div>
+      ${game.imageUrl ? `
+        <div class="detail-game-image">
+          <img src="${game.imageUrl}" alt="${game.title}" />
         </div>
       ` : ''}
-      ${timeInfo ? `
-        <div class="detail-item">
-          <div class="detail-item-label">Play Time</div>
-          <div class="detail-item-value">${timeInfo}</div>
+
+      ${game.description ? `
+        <div class="detail-section">
+          <div class="detail-label">Description</div>
+          <div class="detail-value">${game.description}</div>
         </div>
       ` : ''}
-      ${game.age ? `
-        <div class="detail-item">
-          <div class="detail-item-label">Age</div>
-          <div class="detail-item-value">${game.age}</div>
+
+      <div class="detail-grid">
+        ${playerInfo ? `
+          <div class="detail-item">
+            <div class="detail-item-label">Players</div>
+            <div class="detail-item-value"><span class="iconify" data-icon="ant-design:team-outlined"></span> ${playerInfo}</div>
+          </div>
+        ` : ''}
+        ${timeInfo ? `
+          <div class="detail-item">
+            <div class="detail-item-label">Play Time</div>
+            <div class="detail-item-value"><span class="iconify" data-icon="ant-design:clock-circle-outlined"></span> ${timeInfo}</div>
+          </div>
+        ` : ''}
+        ${game.age ? `
+          <div class="detail-item">
+            <div class="detail-item-label">Age</div>
+            <div class="detail-item-value">${game.age}</div>
+          </div>
+        ` : ''}
+        ${game.rating ? `
+          <div class="detail-item">
+            <div class="detail-item-label">Rating</div>
+            <div class="detail-item-value"><span class="iconify" data-icon="ant-design:star-filled"></span> ${game.rating}</div>
+          </div>
+        ` : ''}
+        ${game.complexity ? `
+          <div class="detail-item">
+            <div class="detail-item-label">Complexity</div>
+            <div class="detail-item-value">${game.complexity}</div>
+          </div>
+        ` : ''}
+        ${game.inventoryCategory ? `
+          <div class="detail-item">
+            <div class="detail-item-label">Category</div>
+            <div class="detail-item-value">${game.inventoryCategory}</div>
+          </div>
+        ` : ''}
+      </div>
+
+      ${game.gameMode ? `
+        <div class="detail-section">
+          <div class="detail-label">Game Mode</div>
+          <div class="detail-value">${game.gameMode}</div>
         </div>
       ` : ''}
-      ${game.rating ? `
-        <div class="detail-item">
-          <div class="detail-item-label">Rating</div>
-          <div class="detail-item-value"><span class="iconify" data-icon="ant-design:star-filled"></span> ${game.rating}</div>
+
+      ${game.theme ? `
+        <div class="detail-section">
+          <div class="detail-label">Theme</div>
+          <div class="detail-value">${game.theme}</div>
         </div>
       ` : ''}
-      ${game.complexity ? `
-        <div class="detail-item">
-          <div class="detail-item-label">Complexity</div>
-          <div class="detail-item-value">${game.complexity}</div>
+
+      ${game.gameMechanics ? `
+        <div class="detail-section">
+          <div class="detail-label">Game Mechanics</div>
+          <div class="detail-value">${game.gameMechanics}</div>
         </div>
       ` : ''}
-      ${game.inventoryCategory ? `
-        <div class="detail-item">
-          <div class="detail-item-label">Category</div>
-          <div class="detail-item-value">${game.inventoryCategory}</div>
+
+      ${game.tags ? `
+        <div class="detail-section">
+          <div class="detail-label">Tags</div>
+          <div class="detail-value">${game.tags}</div>
         </div>
       ` : ''}
-    </div>
 
-    ${game.gameMode ? `
-      <div class="detail-section">
-        <div class="detail-label">Game Mode</div>
-        <div class="detail-value">${game.gameMode}</div>
-      </div>
-    ` : ''}
+      ${game.notes ? `
+        <div class="detail-section">
+          <div class="detail-label">Notes</div>
+          <div class="detail-value">${game.notes}</div>
+        </div>
+      ` : ''}
 
-    ${game.theme ? `
-      <div class="detail-section">
-        <div class="detail-label">Theme</div>
-        <div class="detail-value">${game.theme}</div>
-      </div>
-    ` : ''}
-
-    ${game.gameMechanics ? `
-      <div class="detail-section">
-        <div class="detail-label">Game Mechanics</div>
-        <div class="detail-value">${game.gameMechanics}</div>
-      </div>
-    ` : ''}
-
-    ${game.tags ? `
-      <div class="detail-section">
-        <div class="detail-label">Tags</div>
-        <div class="detail-value">${game.tags}</div>
-      </div>
-    ` : ''}
-
-    ${game.notes ? `
-      <div class="detail-section">
-        <div class="detail-label">Notes</div>
-        <div class="detail-value">${game.notes}</div>
-      </div>
-    ` : ''}
-
-    <div class="game-links">
       ${game.rulesUrl ? `
-        <a href="${game.rulesUrl}" target="_blank" class="game-link-btn">
-          <span class="iconify" data-icon="ant-design:book-outlined"></span> View Rules
-        </a>
+        <div class="detail-section">
+          <a href="${game.rulesUrl}" target="_blank" class="game-link-btn">
+            <span class="iconify" data-icon="ant-design:book-outlined"></span> View Rules
+          </a>
+        </div>
       ` : ''}
-      <button class="game-link-btn" onclick="closeModal()">Close</button>
     </div>
   `;
 
-  modal.classList.remove('hidden');
-  document.body.style.overflow = 'hidden';
+  // Hide list, show detail
+  gameListView.classList.add('hidden');
+  gameDetailView.classList.remove('hidden');
+
+  // Scroll to top
+  window.scrollTo(0, 0);
 }
 
-// Close modal
-function closeModal() {
-  const modal = document.getElementById('gameModal');
-  modal.classList.add('hidden');
-  document.body.style.overflow = 'auto';
-}
+// Back to game list
+function showGameList() {
+  const gameListView = document.getElementById('gameListView');
+  const gameDetailView = document.getElementById('gameDetailView');
 
-// Expose closeModal to global scope for inline onclick handlers
-window.closeModal = closeModal;
+  gameDetailView.classList.add('hidden');
+  gameListView.classList.remove('hidden');
+
+  // Scroll to top
+  window.scrollTo(0, 0);
+}
 
 // Utility: Debounce
 function debounce(func, wait) {
@@ -363,9 +377,12 @@ function debounce(func, wait) {
   };
 }
 
-// Close modal on Escape key
+// Back to list on Escape key
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    closeModal();
+    const gameDetailView = document.getElementById('gameDetailView');
+    if (gameDetailView && !gameDetailView.classList.contains('hidden')) {
+      showGameList();
+    }
   }
 });
