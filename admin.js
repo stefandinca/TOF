@@ -265,7 +265,23 @@ function setFormData(game) {
   document.getElementById('type').value = game.type || '';
   document.getElementById('theme').value = game.theme || '';
   document.getElementById('vibe').value = game.vibe || '';
-  document.getElementById('gameMechanics').value = game.gameMechanics || '';
+  
+  // Handle Mechanics (check both BGG 'mechanics' array and manual 'gameMechanics' string)
+  let mechStr = '';
+  if (Array.isArray(game.mechanics)) {
+    mechStr = game.mechanics.join(', ');
+  } else if (game.gameMechanics) {
+    mechStr = game.gameMechanics;
+  }
+  document.getElementById('gameMechanics').value = mechStr;
+
+  // Handle Categories (check BGG 'categories' array)
+  let catStr = '';
+  if (Array.isArray(game.categories)) {
+    catStr = game.categories.join(', ');
+  }
+  document.getElementById('categories').value = catStr;
+
   document.getElementById('tags').value = game.tags || '';
 
   // Inventory & Admin
@@ -309,7 +325,14 @@ function getFormData() {
     type: document.getElementById('type').value.trim(),
     theme: document.getElementById('theme').value.trim(),
     vibe: document.getElementById('vibe').value.trim(),
+    
+    // Save as arrays
+    mechanics: document.getElementById('gameMechanics').value.split(',').map(s => s.trim()).filter(Boolean),
+    categories: document.getElementById('categories').value.split(',').map(s => s.trim()).filter(Boolean),
+    
+    // Legacy support (optional, can keep sending string if other parts of app rely on it)
     gameMechanics: document.getElementById('gameMechanics').value.trim(),
+    
     tags: document.getElementById('tags').value.trim(),
 
     // Inventory & Admin

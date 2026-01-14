@@ -300,16 +300,45 @@ function showGameDetail(game) {
   const playerInfo = formatPlayerCount(game.playerCountMin, game.playerCountMax);
   const timeInfo = formatPlayTime(game.playTimeMin, game.playTimeMax);
 
+  // Prepare images for slider
+  const images = game.images && game.images.length > 0 ? game.images : (game.imageUrl ? [game.imageUrl] : []);
+
+  let imageSectionHTML = '';
+
+  if (images.length > 1) {
+    // Slider HTML
+    imageSectionHTML = `
+      <div class="detail-game-image-container">
+        <div class="detail-game-image" id="gameImageSlider">
+          <img src="${images[0]}" alt="${game.title}" id="sliderImage" />
+        </div>
+        <button class="slider-btn prev" id="prevBtn">&#10094;</button>
+        <button class="slider-btn next" id="nextBtn">&#10095;</button>
+        <div class="slider-dots" id="sliderDots">
+          ${images.map((_, index) => `<span class="slider-dot ${index === 0 ? 'active' : ''}" data-index="${index}"></span>`).join('')}
+        </div>
+      </div>
+    `;
+  } else if (images.length === 1) {
+    // Single Image HTML
+    imageSectionHTML = `
+      <div class="detail-game-image-container">
+        <div class="detail-game-image">
+          <img src="${images[0]}" alt="${game.title}" />
+        </div>
+      </div>
+    `;
+  } else {
+    // Placeholder HTML
+    imageSectionHTML = '';
+  }
+
   gameDetailContent.innerHTML = `
     <div class="detail-container">
       <h2 class="detail-game-title">${game.title || 'Untitled Game'}</h2>
       <p class="detail-game-publisher">${game.publisher || 'Unknown Publisher'}</p>
 
-      ${game.imageUrl ? `
-        <div class="detail-game-image">
-          <img src="${game.imageUrl}" alt="${game.title}" />
-        </div>
-      ` : ''}
+      ${imageSectionHTML}
 
       ${game.description ? `
         <div class="detail-section">
@@ -351,11 +380,33 @@ function showGameDetail(game) {
         ` : ''}
         ${game.inventoryCategory ? `
           <div class="detail-item">
-            <div class="detail-item-label">Category</div>
+            <div class="detail-item-label">Inventory</div>
             <div class="detail-item-value">${game.inventoryCategory}</div>
           </div>
         ` : ''}
       </div>
+
+      ${(game.categories && game.categories.length > 0) ? `
+        <div class="detail-section">
+          <div class="detail-label">Categories</div>
+          <div class="detail-value">
+            ${Array.isArray(game.categories) 
+              ? game.categories.map(c => `<span class="meta-badge">${c}</span>`).join(' ') 
+              : game.categories}
+          </div>
+        </div>
+      ` : ''}
+
+      ${(game.mechanics && game.mechanics.length > 0) || game.gameMechanics ? `
+        <div class="detail-section">
+          <div class="detail-label">Mechanics</div>
+          <div class="detail-value">
+            ${game.mechanics && Array.isArray(game.mechanics)
+              ? game.mechanics.map(m => `<span class="meta-badge">${m}</span>`).join(' ')
+              : (game.gameMechanics || '')}
+          </div>
+        </div>
+      ` : ''}
 
       ${game.gameMode ? `
         <div class="detail-section">
@@ -368,13 +419,6 @@ function showGameDetail(game) {
         <div class="detail-section">
           <div class="detail-label">Theme</div>
           <div class="detail-value">${game.theme}</div>
-        </div>
-      ` : ''}
-
-      ${game.gameMechanics ? `
-        <div class="detail-section">
-          <div class="detail-label">Game Mechanics</div>
-          <div class="detail-value">${game.gameMechanics}</div>
         </div>
       ` : ''}
 
@@ -404,6 +448,49 @@ function showGameDetail(game) {
     <!-- Similar Games Section -->
     <div id="similarGamesSection" class="similar-games-section"></div>
   `;
+
+  // Initialize Slider Logic if multiple images exist
+  if (images.length > 1) {
+    let currentImageIndex = 0;
+    const sliderImage = document.getElementById('sliderImage');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const dots = document.querySelectorAll('.slider-dot');
+
+    const updateSlider = (index) => {
+      sliderImage.style.opacity = '0';
+      setTimeout(() => {
+        sliderImage.src = images[index];
+        sliderImage.style.opacity = '1';
+      }, 300);
+
+      dots.forEach(dot => dot.classList.remove('active'));
+      dots[index].classList.add('active');
+      currentImageIndex = index;
+    };
+
+    prevBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      let newIndex = currentImageIndex - 1;
+      if (newIndex < 0) newIndex = images.length - 1;
+      updateSlider(newIndex);
+    });
+
+    nextBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      let newIndex = currentImageIndex + 1;
+      if (newIndex >= images.length) newIndex = 0;
+      updateSlider(newIndex);
+    });
+
+    dots.forEach(dot => {
+      dot.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const index = parseInt(e.target.dataset.index);
+        updateSlider(index);
+      });
+    });
+  }
 
   // Hide list, show detail
   gameListView.classList.add('hidden');
