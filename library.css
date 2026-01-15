@@ -764,7 +764,9 @@
     margin-right: 0;
   }
 
-  .filter-toggle-btn {
+  /*.filter-toggle-btn {
+    display: inline-flex;
+  }*/
 
 }
 
