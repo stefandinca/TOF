@@ -22,85 +22,214 @@
     <p class="text-xl font-medium py-3">Explore our collection of 180+ board games</p>
   </div>
 
-  <!-- Search and Filters -->
-  <div class="filters-container">
-    <div class="flex flex-wrap justify-center gap-3 py-6 px-6">
-      <!-- Search Box -->
-      <input
-        type="text"
-        id="searchInput"
-        placeholder="Search games by name, publisher, theme..."
-        class="search-input"
-      />
+  <!-- Search Bar (Always Visible) -->
+  <div class="search-container">
+    <input
+      type="text"
+      id="searchInput"
+      placeholder="Search games by name, publisher, theme..."
+      class="search-input"
+    />
+    <!-- Mobile Filter Toggle Button -->
+    <button id="filterToggleBtn" class="filter-toggle-btn">
+      <span class="iconify" data-icon="ant-design:filter-outlined"></span>
+      <span>Filters</span>
+    </button>
+  </div>
 
-      <!-- Filter: Player Count -->
-      <select id="playerFilter" class="filter-select">
-        <option value="">All Player Counts</option>
-        <option value="1">Solo (1 player)</option>
-        <option value="2">2 players</option>
-        <option value="3-4">3-4 players</option>
-        <option value="5+">5+ players</option>
-      </select>
+  <!-- Mobile Filter Overlay -->
+  <div id="filterOverlay" class="filter-overlay hidden">
+    <div class="filter-overlay-content">
+      <div class="filter-overlay-header">
+        <h3>Filters</h3>
+        <button id="closeFilterOverlay" class="filter-overlay-close">
+          <span class="iconify" data-icon="ant-design:close-outlined"></span>
+        </button>
+      </div>
 
-      <!-- Filter: Game Mode -->
-      <select id="modeFilter" class="filter-select">
-        <option value="">All Game Modes</option>
-        <option value="Competitive">Competitive</option>
-        <option value="Cooperative">Cooperative</option>
-        <option value="Solo">Solo</option>
-        <option value="Team-Based">Team-Based</option>
-        <option value="Conversation">Conversation</option>
-      </select>
+      <div class="filter-overlay-body">
+        <!-- Player Count -->
+        <div class="filter-group">
+          <div class="filter-group-title">Player Count</div>
+          <select id="playerFilterMobile" class="filter-select-mobile">
+            <option value="">All Player Counts</option>
+            <option value="1">Solo (1 player)</option>
+            <option value="2">2 players</option>
+            <option value="3-4">3-4 players</option>
+            <option value="5+">5+ players</option>
+          </select>
+        </div>
 
-      <!-- Filter: Category -->
-      <select id="categoryFilter" class="filter-select">
-        <option value="">All Categories</option>
-        <option value="Base Game">Base Game</option>
-        <option value="Expansion">Expansion</option>
-      </select>
+        <!-- Game Mode -->
+        <div class="filter-group">
+          <div class="filter-group-title">Game Mode</div>
+          <select id="modeFilterMobile" class="filter-select-mobile">
+            <option value="">All Game Modes</option>
+            <option value="Competitive">Competitive</option>
+            <option value="Cooperative">Cooperative</option>
+            <option value="Solo">Solo</option>
+            <option value="Team-Based">Team-Based</option>
+            <option value="Conversation">Conversation</option>
+          </select>
+        </div>
 
-      <!-- Sort -->
-      <select id="sortSelect" class="filter-select">
-        <option value="title">Sort by Name</option>
-        <option value="rating">Sort by Rating</option>
-        <option value="playTimeMin">Sort by Play Time</option>
-        <option value="playerCountMin">Sort by Players</option>
-      </select>
+        <!-- Inventory Category -->
+        <div class="filter-group">
+          <div class="filter-group-title">Inventory</div>
+          <select id="categoryFilterMobile" class="filter-select-mobile">
+            <option value="">All Types</option>
+            <option value="Base Game">Base Game</option>
+            <option value="Expansion">Expansion</option>
+          </select>
+        </div>
 
-      <!-- Reset Button -->
-      <button id="resetFilters" class="filter-btn">Reset Filters</button>
+        <!-- Categories (Checkboxes) -->
+        <div class="filter-group">
+          <div class="filter-group-title">Categories</div>
+          <input type="text" class="checkbox-search" id="categoriesSearchMobile" placeholder="Search categories...">
+          <div id="categoriesCheckboxesMobile" class="checkbox-group collapsible" data-type="categories-mobile">
+            <!-- Dynamically populated -->
+          </div>
+          <button class="show-more-btn hidden" data-target="categories-mobile">Show more</button>
+        </div>
+
+        <!-- Mechanics (Checkboxes) -->
+        <div class="filter-group">
+          <div class="filter-group-title">Mechanics</div>
+          <input type="text" class="checkbox-search" id="mechanicsSearchMobile" placeholder="Search mechanics...">
+          <div id="mechanicsCheckboxesMobile" class="checkbox-group collapsible" data-type="mechanics-mobile">
+            <!-- Dynamically populated -->
+          </div>
+          <button class="show-more-btn hidden" data-target="mechanics-mobile">Show more</button>
+        </div>
+
+        <!-- Sort -->
+        <div class="filter-group">
+          <div class="filter-group-title">Sort By</div>
+          <select id="sortSelectMobile" class="filter-select-mobile">
+            <option value="title">Name</option>
+            <option value="rating">Rating</option>
+            <option value="playTimeMin">Play Time</option>
+            <option value="playerCountMin">Players</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="filter-overlay-footer">
+        <button id="applyFiltersMobile" class="filter-btn-apply">Apply Filters</button>
+        <button id="resetFiltersMobile" class="filter-btn-reset">Reset</button>
+      </div>
     </div>
   </div>
 
-  <!-- Game List View -->
-  <div id="gameListView">
-    <!-- Loading State -->
-    <div id="loading" class="flex justify-center py-12">
-      <div class="loading-spinner"></div>
-    </div>
+  <!-- Main Layout: Sidebar + Content -->
+  <div class="library-layout">
+    <!-- Desktop Sidebar Filters -->
+    <aside class="filters-sidebar desktop-filters">
+      <div class="sidebar-content">
+        <!-- Sort -->
+        <div class="filter-group">
+          <div class="filter-group-title">Sort By</div>
+          <select id="sortSelect" class="filter-select-sidebar">
+            <option value="title">Name</option>
+            <option value="rating">Rating</option>
+            <option value="playTimeMin">Play Time</option>
+            <option value="playerCountMin">Players</option>
+          </select>
+        </div>
 
-    <!-- Results Count -->
-    <div id="resultsCount" class="text-center text-sm py-3 hidden"></div>
+        <!-- Player Count -->
+        <div class="filter-group">
+          <div class="filter-group-title">Player Count</div>
+          <select id="playerFilter" class="filter-select-sidebar">
+            <option value="">All Player Counts</option>
+            <option value="1">Solo (1 player)</option>
+            <option value="2">2 players</option>
+            <option value="3-4">3-4 players</option>
+            <option value="5+">5+ players</option>
+          </select>
+        </div>
 
-    <!-- Games Grid -->
-    <div id="gamesGrid" class="games-grid"></div>
+        <!-- Game Mode -->
+        <div class="filter-group">
+          <div class="filter-group-title">Game Mode</div>
+          <select id="modeFilter" class="filter-select-sidebar">
+            <option value="">All Game Modes</option>
+            <option value="Competitive">Competitive</option>
+            <option value="Cooperative">Cooperative</option>
+            <option value="Solo">Solo</option>
+            <option value="Team-Based">Team-Based</option>
+            <option value="Conversation">Conversation</option>
+          </select>
+        </div>
 
-    <!-- No Results Message -->
-    <div id="noResults" class="text-center py-12 hidden">
-      <p class="text-xl font-semibold">No games found</p>
-      <p class="text-sm py-3">Try adjusting your filters or search terms</p>
-    </div>
-  </div>
+        <!-- Inventory Category -->
+        <div class="filter-group">
+          <div class="filter-group-title">Inventory</div>
+          <select id="categoryFilter" class="filter-select-sidebar">
+            <option value="">All Types</option>
+            <option value="Base Game">Base Game</option>
+            <option value="Expansion">Expansion</option>
+          </select>
+        </div>
 
-  <!-- Game Detail View -->
-  <div id="gameDetailView" class="game-detail-view hidden">
-    <div class="detail-header">
-      <button id="backButton" class="back-button">
-        <span class="iconify" data-icon="ant-design:arrow-left-outlined"></span>
-        Back to Library
-      </button>
-    </div>
-    <div id="gameDetailContent" class="detail-content"></div>
+        <!-- Categories (Checkboxes) -->
+        <div class="filter-group">
+          <div class="filter-group-title">Categories</div>
+          <input type="text" class="checkbox-search" id="categoriesSearch" placeholder="Search categories...">
+          <div id="categoriesCheckboxes" class="checkbox-group collapsible" data-type="categories">
+            <!-- Dynamically populated -->
+          </div>
+          <button class="show-more-btn hidden" data-target="categories">Show more</button>
+        </div>
+
+        <!-- Mechanics (Checkboxes) -->
+        <div class="filter-group">
+          <div class="filter-group-title">Mechanics</div>
+          <input type="text" class="checkbox-search" id="mechanicsSearch" placeholder="Search mechanics...">
+          <div id="mechanicsCheckboxes" class="checkbox-group collapsible" data-type="mechanics">
+            <!-- Dynamically populated -->
+          </div>
+          <button class="show-more-btn hidden" data-target="mechanics">Show more</button>
+        </div>
+
+        <!-- Reset Button -->
+        <button id="resetFilters" class="filter-btn-sidebar">Reset All Filters</button>
+      </div>
+    </aside>
+
+    <!-- Game List View -->
+    <main class="library-content">
+      <div id="gameListView">
+        <!-- Loading State -->
+        <div id="loading" class="flex justify-center py-12">
+          <div class="loading-spinner"></div>
+        </div>
+
+        <!-- Results Count -->
+        <div id="resultsCount" class="text-center text-sm py-3 hidden"></div>
+
+        <!-- Games Grid -->
+        <div id="gamesGrid" class="games-grid"></div>
+
+        <!-- No Results Message -->
+        <div id="noResults" class="text-center py-12 hidden">
+          <p class="text-xl font-semibold">No games found</p>
+          <p class="text-sm py-3">Try adjusting your filters or search terms</p>
+        </div>
+      </div>
+
+      <!-- Game Detail View -->
+      <div id="gameDetailView" class="game-detail-view hidden">
+        <div class="detail-header">
+          <button id="backButton" class="back-button">
+            <span class="iconify" data-icon="ant-design:arrow-left-outlined"></span>
+            Back to Library
+          </button>
+        </div>
+        <div id="gameDetailContent" class="detail-content"></div>
+      </div>
+    </main>
   </div>
 
   <!-- Footer -->

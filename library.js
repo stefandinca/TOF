@@ -16,6 +16,10 @@ const db = firebase.firestore();
 // Global state
 let allGames = [];
 let filteredGames = [];
+let allCategories = [];
+let allMechanics = [];
+let selectedCategories = [];
+let selectedMechanics = [];
 
 // DOM Elements
 const gamesGrid = document.getElementById('gamesGrid');
@@ -28,6 +32,26 @@ const modeFilter = document.getElementById('modeFilter');
 const categoryFilter = document.getElementById('categoryFilter');
 const sortSelect = document.getElementById('sortSelect');
 const resetFiltersBtn = document.getElementById('resetFilters');
+
+// Mobile filter elements
+const filterToggleBtn = document.getElementById('filterToggleBtn');
+const filterOverlay = document.getElementById('filterOverlay');
+const closeFilterOverlayBtn = document.getElementById('closeFilterOverlay');
+const applyFiltersMobileBtn = document.getElementById('applyFiltersMobile');
+const resetFiltersMobileBtn = document.getElementById('resetFiltersMobile');
+const playerFilterMobile = document.getElementById('playerFilterMobile');
+const modeFilterMobile = document.getElementById('modeFilterMobile');
+const categoryFilterMobile = document.getElementById('categoryFilterMobile');
+const sortSelectMobile = document.getElementById('sortSelectMobile');
+
+// Checkbox search elements
+const categoriesSearch = document.getElementById('categoriesSearch');
+const mechanicsSearch = document.getElementById('mechanicsSearch');
+const categoriesSearchMobile = document.getElementById('categoriesSearchMobile');
+const mechanicsSearchMobile = document.getElementById('mechanicsSearchMobile');
+
+// Constants
+const VISIBLE_CHECKBOX_COUNT = 5;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -53,6 +77,10 @@ async function loadGames() {
       ...doc.data()
     }));
 
+    // Extract unique categories and mechanics
+    extractCategoriesAndMechanics();
+    populateCheckboxes();
+
     filteredGames = [...allGames];
     sortGames();
     renderGames();
@@ -69,8 +97,189 @@ async function loadGames() {
   }
 }
 
+// Extract unique categories and mechanics from all games
+function extractCategoriesAndMechanics() {
+  const categoriesSet = new Set();
+  const mechanicsSet = new Set();
+
+  allGames.forEach(game => {
+    // Extract categories
+    if (game.categories && Array.isArray(game.categories)) {
+      game.categories.forEach(cat => {
+        if (cat && cat.trim()) categoriesSet.add(cat.trim());
+      });
+    }
+
+    // Extract mechanics
+    if (game.mechanics && Array.isArray(game.mechanics)) {
+      game.mechanics.forEach(mech => {
+        if (mech && mech.trim()) mechanicsSet.add(mech.trim());
+      });
+    }
+  });
+
+  allCategories = [...categoriesSet].sort();
+  allMechanics = [...mechanicsSet].sort();
+}
+
+// Populate checkbox groups
+function populateCheckboxes() {
+  const containers = [
+    { id: 'categoriesCheckboxes', items: allCategories, type: 'category', dataType: 'categories' },
+    { id: 'categoriesCheckboxesMobile', items: allCategories, type: 'category', dataType: 'categories-mobile' },
+    { id: 'mechanicsCheckboxes', items: allMechanics, type: 'mechanic', dataType: 'mechanics' },
+    { id: 'mechanicsCheckboxesMobile', items: allMechanics, type: 'mechanic', dataType: 'mechanics-mobile' }
+  ];
+
+  containers.forEach(({ id, items, type, dataType }) => {
+    const container = document.getElementById(id);
+    if (!container) return;
+
+    container.innerHTML = items.map((item, index) => `
+      <label class="checkbox-label ${index >= VISIBLE_CHECKBOX_COUNT ? 'hidden-checkbox' : ''}" data-item="${item.toLowerCase()}">
+        <input type="checkbox" value="${item}" data-type="${type}" class="filter-checkbox" />
+        <span class="checkbox-text">${item}</span>
+      </label>
+    `).join('');
+
+    // Add event listeners to checkboxes
+    container.querySelectorAll('.filter-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        handleCheckboxChange(e, type, id.includes('Mobile'));
+      });
+    });
+
+    // Setup show more button
+    const showMoreBtn = document.querySelector(`button[data-target="${dataType}"]`);
+    if (showMoreBtn && items.length > VISIBLE_CHECKBOX_COUNT) {
+      showMoreBtn.classList.remove('hidden');
+      showMoreBtn.addEventListener('click', () => toggleShowMore(dataType, showMoreBtn));
+    }
+  });
+
+  // Setup checkbox search
+  setupCheckboxSearch();
+}
+
+// Toggle show more/less for checkbox groups
+function toggleShowMore(dataType, button) {
+  const container = document.querySelector(`[data-type="${dataType}"]`);
+  if (!container) return;
+
+  const isExpanded = container.classList.contains('expanded');
+
+  if (isExpanded) {
+    container.classList.remove('expanded');
+    container.querySelectorAll('.hidden-checkbox').forEach(label => {
+      label.style.display = 'none';
+    });
+    button.textContent = 'Show more';
+  } else {
+    container.classList.add('expanded');
+    container.querySelectorAll('.hidden-checkbox').forEach(label => {
+      label.style.display = 'flex';
+    });
+    button.textContent = 'Show less';
+  }
+}
+
+// Setup checkbox search functionality
+function setupCheckboxSearch() {
+  const searchInputs = [
+    { input: categoriesSearch, containerId: 'categoriesCheckboxes', dataType: 'categories' },
+    { input: categoriesSearchMobile, containerId: 'categoriesCheckboxesMobile', dataType: 'categories-mobile' },
+    { input: mechanicsSearch, containerId: 'mechanicsCheckboxes', dataType: 'mechanics' },
+    { input: mechanicsSearchMobile, containerId: 'mechanicsCheckboxesMobile', dataType: 'mechanics-mobile' }
+  ];
+
+  searchInputs.forEach(({ input, containerId, dataType }) => {
+    if (!input) return;
+
+    input.addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase().trim();
+      const container = document.getElementById(containerId);
+      const showMoreBtn = document.querySelector(`button[data-target="${dataType}"]`);
+
+      if (!container) return;
+
+      const labels = container.querySelectorAll('.checkbox-label');
+
+      if (searchTerm === '') {
+        // Reset to default view
+        labels.forEach((label, index) => {
+          const isHiddenByDefault = index >= VISIBLE_CHECKBOX_COUNT;
+          const isExpanded = container.classList.contains('expanded');
+
+          if (isHiddenByDefault && !isExpanded) {
+            label.style.display = 'none';
+          } else {
+            label.style.display = 'flex';
+          }
+        });
+        if (showMoreBtn) showMoreBtn.style.display = '';
+      } else {
+        // Filter by search term
+        labels.forEach(label => {
+          const itemName = label.getAttribute('data-item');
+          if (itemName.includes(searchTerm)) {
+            label.style.display = 'flex';
+          } else {
+            label.style.display = 'none';
+          }
+        });
+        // Hide show more button when searching
+        if (showMoreBtn) showMoreBtn.style.display = 'none';
+      }
+    });
+  });
+}
+
+// Handle checkbox changes
+function handleCheckboxChange(e, type, isMobile) {
+  const value = e.target.value;
+  const isChecked = e.target.checked;
+
+  if (type === 'category') {
+    if (isChecked && !selectedCategories.includes(value)) {
+      selectedCategories.push(value);
+    } else if (!isChecked) {
+      selectedCategories = selectedCategories.filter(c => c !== value);
+    }
+  } else if (type === 'mechanic') {
+    if (isChecked && !selectedMechanics.includes(value)) {
+      selectedMechanics.push(value);
+    } else if (!isChecked) {
+      selectedMechanics = selectedMechanics.filter(m => m !== value);
+    }
+  }
+
+  // Sync checkboxes between desktop and mobile
+  syncCheckboxes(type, value, isChecked, isMobile);
+
+  // Apply filters immediately for desktop, wait for apply button on mobile
+  if (!isMobile) {
+    applyFilters();
+  }
+}
+
+// Sync checkboxes between desktop and mobile
+function syncCheckboxes(type, value, isChecked, fromMobile) {
+  const desktopContainer = type === 'category' ? 'categoriesCheckboxes' : 'mechanicsCheckboxes';
+  const mobileContainer = type === 'category' ? 'categoriesCheckboxesMobile' : 'mechanicsCheckboxesMobile';
+  const targetContainer = fromMobile ? desktopContainer : mobileContainer;
+
+  const container = document.getElementById(targetContainer);
+  if (!container) return;
+
+  const checkbox = container.querySelector(`input[value="${value}"]`);
+  if (checkbox) {
+    checkbox.checked = isChecked;
+  }
+}
+
 // Setup event listeners
 function setupEventListeners() {
+  // Desktop filters
   searchInput.addEventListener('input', debounce(applyFilters, 300));
   playerFilter.addEventListener('change', applyFilters);
   modeFilter.addEventListener('change', applyFilters);
@@ -80,6 +289,91 @@ function setupEventListeners() {
     renderGames();
   });
   resetFiltersBtn.addEventListener('click', resetFilters);
+
+  // Mobile filter overlay toggle
+  if (filterToggleBtn) {
+    filterToggleBtn.addEventListener('click', openFilterOverlay);
+  }
+  if (closeFilterOverlayBtn) {
+    closeFilterOverlayBtn.addEventListener('click', closeFilterOverlay);
+  }
+  if (filterOverlay) {
+    filterOverlay.addEventListener('click', (e) => {
+      if (e.target === filterOverlay) closeFilterOverlay();
+    });
+  }
+
+  // Mobile filter buttons
+  if (applyFiltersMobileBtn) {
+    applyFiltersMobileBtn.addEventListener('click', () => {
+      applyMobileFilters();
+      closeFilterOverlay();
+    });
+  }
+  if (resetFiltersMobileBtn) {
+    resetFiltersMobileBtn.addEventListener('click', resetMobileFilters);
+  }
+}
+
+// Open filter overlay
+function openFilterOverlay() {
+  filterOverlay.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+
+  // Sync mobile filters with current state
+  syncMobileFiltersFromState();
+}
+
+// Close filter overlay
+function closeFilterOverlay() {
+  filterOverlay.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+// Sync mobile filters from current state
+function syncMobileFiltersFromState() {
+  if (playerFilterMobile) playerFilterMobile.value = playerFilter.value;
+  if (modeFilterMobile) modeFilterMobile.value = modeFilter.value;
+  if (categoryFilterMobile) categoryFilterMobile.value = categoryFilter.value;
+  if (sortSelectMobile) sortSelectMobile.value = sortSelect.value;
+}
+
+// Apply mobile filters to desktop and trigger filter
+function applyMobileFilters() {
+  // Sync select values from mobile to desktop
+  if (playerFilterMobile) playerFilter.value = playerFilterMobile.value;
+  if (modeFilterMobile) modeFilter.value = modeFilterMobile.value;
+  if (categoryFilterMobile) categoryFilter.value = categoryFilterMobile.value;
+  if (sortSelectMobile) sortSelect.value = sortSelectMobile.value;
+
+  // Apply filters
+  sortGames();
+  applyFilters();
+}
+
+// Reset mobile filters
+function resetMobileFilters() {
+  // Reset mobile selects
+  if (playerFilterMobile) playerFilterMobile.value = '';
+  if (modeFilterMobile) modeFilterMobile.value = '';
+  if (categoryFilterMobile) categoryFilterMobile.value = '';
+  if (sortSelectMobile) sortSelectMobile.value = 'title';
+
+  // Reset mobile checkboxes
+  const mobileCheckboxes = document.querySelectorAll('#categoriesCheckboxesMobile input, #mechanicsCheckboxesMobile input');
+  mobileCheckboxes.forEach(cb => cb.checked = false);
+
+  // Reset selected arrays
+  selectedCategories = [];
+  selectedMechanics = [];
+
+  // Sync to desktop
+  const desktopCheckboxes = document.querySelectorAll('#categoriesCheckboxes input, #mechanicsCheckboxes input');
+  desktopCheckboxes.forEach(cb => cb.checked = false);
+
+  // Reset search inputs
+  if (categoriesSearchMobile) categoriesSearchMobile.value = '';
+  if (mechanicsSearchMobile) mechanicsSearchMobile.value = '';
 }
 
 // Apply filters
@@ -87,7 +381,7 @@ function applyFilters() {
   const searchTerm = searchInput.value.toLowerCase().trim();
   const playerCount = playerFilter.value;
   const mode = modeFilter.value;
-  const category = categoryFilter.value;
+  const inventoryCategory = categoryFilter.value;
 
   filteredGames = allGames.filter(game => {
     // Search filter
@@ -127,9 +421,27 @@ function applyFilters() {
       }
     }
 
-    // Category filter
-    if (category) {
-      if (game.inventoryCategory !== category) {
+    // Inventory category filter (Base Game / Expansion)
+    if (inventoryCategory) {
+      if (game.inventoryCategory !== inventoryCategory) {
+        return false;
+      }
+    }
+
+    // Categories filter (OR logic - game must have at least one selected category)
+    if (selectedCategories.length > 0) {
+      const gameCategories = game.categories || [];
+      const hasMatchingCategory = selectedCategories.some(cat => gameCategories.includes(cat));
+      if (!hasMatchingCategory) {
+        return false;
+      }
+    }
+
+    // Mechanics filter (OR logic - game must have at least one selected mechanic)
+    if (selectedMechanics.length > 0) {
+      const gameMechanics = game.mechanics || [];
+      const hasMatchingMechanic = selectedMechanics.some(mech => gameMechanics.includes(mech));
+      if (!hasMatchingMechanic) {
         return false;
       }
     }
@@ -166,6 +478,31 @@ function resetFilters() {
   modeFilter.value = '';
   categoryFilter.value = '';
   sortSelect.value = 'title';
+
+  // Reset categories and mechanics
+  selectedCategories = [];
+  selectedMechanics = [];
+
+  // Uncheck all checkboxes
+  const allCheckboxes = document.querySelectorAll('.filter-checkbox');
+  allCheckboxes.forEach(cb => cb.checked = false);
+
+  // Reset search inputs
+  if (categoriesSearch) categoriesSearch.value = '';
+  if (mechanicsSearch) mechanicsSearch.value = '';
+
+  // Reset show more buttons and visibility
+  document.querySelectorAll('.checkbox-group').forEach(container => {
+    container.classList.remove('expanded');
+    container.querySelectorAll('.hidden-checkbox').forEach(label => {
+      label.style.display = 'none';
+    });
+  });
+  document.querySelectorAll('.show-more-btn').forEach(btn => {
+    btn.textContent = 'Show more';
+    btn.style.display = '';
+  });
+
   applyFilters();
 }
 
@@ -203,9 +540,23 @@ function createGameCard(game) {
     ? `<div class="rank-badge">Rank - ${game.bggRank} on BGG</div>` 
     : '';
 
+  // Status Badges logic
+  let statusBadgesHTML = '';
+  if (game.quantityLibrary > 0 || game.quantityRetail > 0) {
+    statusBadgesHTML = '<div class="status-badge-container">';
+    if (game.quantityLibrary > 0) {
+      statusBadgesHTML += '<div class="status-badge library">In Library</div>';
+    }
+    if (game.quantityRetail > 0) {
+      statusBadgesHTML += '<div class="status-badge retail">For Sale</div>';
+    }
+    statusBadgesHTML += '</div>';
+  }
+
   card.innerHTML = `
     <div class="game-image">
       ${rankBadgeHTML}
+      ${statusBadgesHTML}
       ${game.imageUrl ?
         `<img src="${game.imageUrl}" alt="${game.title}" loading="lazy" />` :
         '<div class="game-image-placeholder"><span class="iconify" data-icon="ant-design:trophy-outlined" style="font-size: 3rem;"></span></div>'
@@ -314,6 +665,19 @@ function showGameDetail(game) {
     ? `<div class="rank-badge">Rank - ${game.bggRank} on BGG</div>` 
     : '';
 
+  // Status Badges logic
+  let statusBadgesHTML = '';
+  if (game.quantityLibrary > 0 || game.quantityRetail > 0) {
+    statusBadgesHTML = '<div class="status-badge-container">';
+    if (game.quantityLibrary > 0) {
+      statusBadgesHTML += '<div class="status-badge library">In Library</div>';
+    }
+    if (game.quantityRetail > 0) {
+      statusBadgesHTML += '<div class="status-badge retail">For Sale</div>';
+    }
+    statusBadgesHTML += '</div>';
+  }
+
   let imageSectionHTML = '';
 
   if (images.length > 1) {
@@ -321,6 +685,7 @@ function showGameDetail(game) {
     imageSectionHTML = `
       <div class="detail-game-image-container">
         ${rankBadgeHTML}
+        ${statusBadgesHTML}
         <div class="detail-game-image" id="gameImageSlider">
           <img src="${images[0]}" alt="${game.title}" id="sliderImage" />
         </div>
@@ -336,6 +701,7 @@ function showGameDetail(game) {
     imageSectionHTML = `
       <div class="detail-game-image-container">
         ${rankBadgeHTML}
+        ${statusBadgesHTML}
         <div class="detail-game-image">
           <img src="${images[0]}" alt="${game.title}" />
         </div>
@@ -362,7 +728,7 @@ function showGameDetail(game) {
 
       <div class="detail-grid">
         ${playerInfo ? `
-          <div class="detail-item">
+          <div class="detail-item clickable-filter" data-filter-type="players" data-filter-value="${game.playerCountMin}">
             <div class="detail-item-label">Players</div>
             <div class="detail-item-value">
               <span class="iconify" data-icon="ant-design:team-outlined"></span> ${playerInfo}
@@ -371,7 +737,7 @@ function showGameDetail(game) {
           </div>
         ` : ''}
         ${timeInfo ? `
-          <div class="detail-item">
+          <div class="detail-item clickable-filter" data-filter-type="playtime" data-filter-value="${game.playTimeMin}">
             <div class="detail-item-label">Play Time</div>
             <div class="detail-item-value"><span class="iconify" data-icon="ant-design:clock-circle-outlined"></span> ${timeInfo}</div>
           </div>
@@ -395,7 +761,7 @@ function showGameDetail(game) {
           </div>
         ` : ''}
         ${game.inventoryCategory ? `
-          <div class="detail-item">
+          <div class="detail-item clickable-filter" data-filter-type="inventory" data-filter-value="${game.inventoryCategory}">
             <div class="detail-item-label">Inventory</div>
             <div class="detail-item-value">${game.inventoryCategory}</div>
           </div>
@@ -405,9 +771,9 @@ function showGameDetail(game) {
       ${(game.categories && game.categories.length > 0) ? `
         <div class="detail-section">
           <div class="detail-label">Categories</div>
-          <div class="detail-value">
-            ${Array.isArray(game.categories) 
-              ? game.categories.map(c => `<span class="meta-badge">${c}</span>`).join(' ') 
+          <div class="detail-value detail-pills">
+            ${Array.isArray(game.categories)
+              ? game.categories.map(c => `<span class="meta-badge clickable-pill" data-filter-type="category" data-filter-value="${c}">${c}</span>`).join(' ')
               : game.categories}
           </div>
         </div>
@@ -416,9 +782,9 @@ function showGameDetail(game) {
       ${(game.mechanics && game.mechanics.length > 0) || game.gameMechanics ? `
         <div class="detail-section">
           <div class="detail-label">Mechanics</div>
-          <div class="detail-value">
+          <div class="detail-value detail-pills">
             ${game.mechanics && Array.isArray(game.mechanics)
-              ? game.mechanics.map(m => `<span class="meta-badge">${m}</span>`).join(' ')
+              ? game.mechanics.map(m => `<span class="meta-badge clickable-pill" data-filter-type="mechanic" data-filter-value="${m}">${m}</span>`).join(' ')
               : (game.gameMechanics || '')}
           </div>
         </div>
@@ -427,7 +793,9 @@ function showGameDetail(game) {
       ${game.gameMode ? `
         <div class="detail-section">
           <div class="detail-label">Game Mode</div>
-          <div class="detail-value">${game.gameMode}</div>
+          <div class="detail-value">
+            <span class="meta-badge clickable-pill" data-filter-type="mode" data-filter-value="${game.gameMode}">${game.gameMode}</span>
+          </div>
         </div>
       ` : ''}
 
@@ -512,11 +880,98 @@ function showGameDetail(game) {
   gameListView.classList.add('hidden');
   gameDetailView.classList.remove('hidden');
 
+  // Add click handlers for filter pills
+  setupDetailFilterClicks();
+
   // Render similar games
   renderSimilarGames(game);
 
   // Scroll to top
   window.scrollTo(0, 0);
+}
+
+// Setup click handlers for filter pills in detail view
+function setupDetailFilterClicks() {
+  // Clickable pills (categories, mechanics, game mode)
+  document.querySelectorAll('.clickable-pill').forEach(pill => {
+    pill.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const filterType = pill.getAttribute('data-filter-type');
+      const filterValue = pill.getAttribute('data-filter-value');
+      filterAndShowList(filterType, filterValue);
+    });
+  });
+
+  // Clickable detail items (players, playtime, inventory)
+  document.querySelectorAll('.clickable-filter').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const filterType = item.getAttribute('data-filter-type');
+      const filterValue = item.getAttribute('data-filter-value');
+      filterAndShowList(filterType, filterValue);
+    });
+  });
+}
+
+// Apply filter and show list view
+function filterAndShowList(filterType, filterValue) {
+  // Reset all filters first
+  resetFilters();
+
+  // Apply the specific filter
+  switch (filterType) {
+    case 'category':
+      selectedCategories = [filterValue];
+      // Check the checkbox
+      const categoryCheckbox = document.querySelector(`#categoriesCheckboxes input[value="${filterValue}"]`);
+      if (categoryCheckbox) categoryCheckbox.checked = true;
+      const categoryCheckboxMobile = document.querySelector(`#categoriesCheckboxesMobile input[value="${filterValue}"]`);
+      if (categoryCheckboxMobile) categoryCheckboxMobile.checked = true;
+      break;
+
+    case 'mechanic':
+      selectedMechanics = [filterValue];
+      // Check the checkbox
+      const mechanicCheckbox = document.querySelector(`#mechanicsCheckboxes input[value="${filterValue}"]`);
+      if (mechanicCheckbox) mechanicCheckbox.checked = true;
+      const mechanicCheckboxMobile = document.querySelector(`#mechanicsCheckboxesMobile input[value="${filterValue}"]`);
+      if (mechanicCheckboxMobile) mechanicCheckboxMobile.checked = true;
+      break;
+
+    case 'mode':
+      modeFilter.value = filterValue;
+      if (modeFilterMobile) modeFilterMobile.value = filterValue;
+      break;
+
+    case 'players':
+      // Map player count to filter value
+      const playerCount = parseInt(filterValue);
+      if (playerCount === 1) {
+        playerFilter.value = '1';
+      } else if (playerCount === 2) {
+        playerFilter.value = '2';
+      } else if (playerCount <= 4) {
+        playerFilter.value = '3-4';
+      } else {
+        playerFilter.value = '5+';
+      }
+      if (playerFilterMobile) playerFilterMobile.value = playerFilter.value;
+      break;
+
+    case 'playtime':
+      sortSelect.value = 'playTimeMin';
+      if (sortSelectMobile) sortSelectMobile.value = 'playTimeMin';
+      break;
+
+    case 'inventory':
+      categoryFilter.value = filterValue;
+      if (categoryFilterMobile) categoryFilterMobile.value = filterValue;
+      break;
+  }
+
+  // Apply filters and show list
+  applyFilters();
+  showGameList();
 }
 
 // Render similar games section
@@ -545,10 +1000,24 @@ function renderSimilarGames(currentGame) {
       ? `<div class="rank-badge" style="font-size: 0.6rem; padding: 2px 6px;">#${game.bggRank} on BGG</div>` 
       : '';
 
+    // Status Badges logic
+    let statusBadgesHTML = '';
+    if (game.quantityLibrary > 0 || game.quantityRetail > 0) {
+      statusBadgesHTML = '<div class="status-badge-container" style="top: 4px; left: 4px;">';
+      if (game.quantityLibrary > 0) {
+        statusBadgesHTML += '<div class="status-badge library" style="font-size: 0.6rem; padding: 2px 6px;">In Library</div>';
+      }
+      if (game.quantityRetail > 0) {
+        statusBadgesHTML += '<div class="status-badge retail" style="font-size: 0.6rem; padding: 2px 6px;">For Sale</div>';
+      }
+      statusBadgesHTML += '</div>';
+    }
+
     similarGamesHTML += `
       <div class="similar-game-card" data-game-id="${game.id}">
         <div class="similar-game-image">
           ${rankBadgeHTML}
+          ${statusBadgesHTML}
           ${game.imageUrl ?
             `<img src="${game.imageUrl}" alt="${game.title}" loading="lazy" />` :
             '<div class="game-image-placeholder"><span class="iconify" data-icon="ant-design:trophy-outlined"></span></div>'
