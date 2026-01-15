@@ -297,6 +297,58 @@
               </div>
             </div>
           </div>
+
+          <!-- Staff Recommendations Section -->
+          <div class="form-section">
+            <h3 class="section-title">Staff Recommendations</h3>
+            <p class="section-description">Add staff recommendations to highlight this game in the library.</p>
+            <div id="staffRecommendationsContainer" class="staff-recommendations-container">
+              <!-- Dynamically populated -->
+            </div>
+            <button type="button" id="addStaffRecommendation" class="header-btn secondary add-recommendation-btn">
+              <span class="iconify btn-icon" data-icon="ant-design:plus-outlined"></span>
+              <span class="btn-text">Add Staff Recommendation</span>
+            </button>
+          </div>
+
+          <!-- Featured Game of the Month Section -->
+          <div class="form-section">
+            <h3 class="section-title">Game of the Month</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="checkbox-label-inline">
+                  <input type="checkbox" id="isFeaturedGameOfMonth" name="isFeaturedGameOfMonth"/>
+                  <span>Feature this game as Game of the Month</span>
+                </label>
+              </div>
+            </div>
+            <div id="featuredMonthFields" class="featured-month-fields hidden">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="featuredMonth">Month</label>
+                  <select id="featuredMonth" name="featuredMonth">
+                    <option value="">Select month...</option>
+                    <option value="January">January</option>
+                    <option value="February">February</option>
+                    <option value="March">March</option>
+                    <option value="April">April</option>
+                    <option value="May">May</option>
+                    <option value="June">June</option>
+                    <option value="July">July</option>
+                    <option value="August">August</option>
+                    <option value="September">September</option>
+                    <option value="October">October</option>
+                    <option value="November">November</option>
+                    <option value="December">December</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="featuredYear">Year</label>
+                  <input type="number" id="featuredYear" name="featuredYear" min="2020" max="2030" placeholder="2026"/>
+                </div>
+              </div>
+            </div>
+          </div>
         </form>
       </div>
     </div>

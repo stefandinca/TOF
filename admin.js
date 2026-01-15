@@ -54,6 +54,14 @@ const imageUrlInput = document.getElementById('imageUrl');
 const imagePreview = document.getElementById('imagePreview');
 const toastContainer = document.getElementById('toastContainer');
 
+// Staff Recommendations elements
+const staffRecommendationsContainer = document.getElementById('staffRecommendationsContainer');
+const addStaffRecommendationBtn = document.getElementById('addStaffRecommendation');
+
+// Featured Game of the Month elements
+const isFeaturedCheckbox = document.getElementById('isFeaturedGameOfMonth');
+const featuredMonthFields = document.getElementById('featuredMonthFields');
+
 // ===== Authentication =====
 
 // Check if email is authorized
@@ -240,6 +248,13 @@ function clearForm() {
   gameForm.reset();
   selectedGame = null;
   imagePreview.innerHTML = '<div class="placeholder">🎲 No image</div>';
+
+  // Clear staff recommendations
+  staffRecommendationsContainer.innerHTML = '';
+
+  // Reset featured fields
+  isFeaturedCheckbox.checked = false;
+  toggleFeaturedFields();
 }
 
 function setFormData(game) {
@@ -286,6 +301,15 @@ function setFormData(game) {
 
   document.getElementById('tags').value = game.tags || '';
 
+  // Staff Recommendations
+  setStaffRecommendations(game.staffRecommendations || []);
+
+  // Featured Game of the Month
+  isFeaturedCheckbox.checked = game.isFeaturedGameOfMonth === true;
+  document.getElementById('featuredMonth').value = game.featuredMonth || '';
+  document.getElementById('featuredYear').value = game.featuredYear || '';
+  toggleFeaturedFields();
+
   // Inventory & Admin
   document.getElementById('quantityLibrary').value = game.quantityLibrary || '';
   document.getElementById('quantityRetail').value = game.quantityRetail || '';
@@ -304,7 +328,7 @@ function setFormData(game) {
 }
 
 function getFormData() {
-  return {
+  const data = {
     // Basic Information
     title: document.getElementById('title').value.trim(),
     gameId: document.getElementById('gameId').value.trim(),
@@ -329,14 +353,14 @@ function getFormData() {
     type: document.getElementById('type').value.trim(),
     theme: document.getElementById('theme').value.trim(),
     vibe: document.getElementById('vibe').value.trim(),
-    
+
     // Save as arrays
     mechanics: document.getElementById('gameMechanics').value.split(',').map(s => s.trim()).filter(Boolean),
     categories: document.getElementById('categories').value.split(',').map(s => s.trim()).filter(Boolean),
-    
+
     // Legacy support (optional, can keep sending string if other parts of app rely on it)
     gameMechanics: document.getElementById('gameMechanics').value.trim(),
-    
+
     tags: document.getElementById('tags').value.trim(),
 
     // Inventory & Admin
@@ -348,8 +372,19 @@ function getFormData() {
     unitCost: document.getElementById('unitCost').value.trim(),
     rulesUrl: document.getElementById('rulesUrl').value.trim(),
     playTested: document.getElementById('playTested').value.trim(),
-    notes: document.getElementById('notes').value.trim()
+    notes: document.getElementById('notes').value.trim(),
+
+    // Staff Recommendations
+    staffRecommendations: getStaffRecommendations(),
+
+    // Featured Game of the Month
+    isFeaturedGameOfMonth: isFeaturedCheckbox.checked,
+    featuredMonth: document.getElementById('featuredMonth').value.trim(),
+    featuredYear: parseInt(document.getElementById('featuredYear').value) || null
   };
+
+  // Compute isStaffRecommended for easy querying
+  data.isStaffRecommended = data.staffRecommendations && data.staffRecommendations.length > 0;
 
   // Sync images array with imageUrl
   const imageUrl = data.imageUrl;
@@ -361,12 +396,6 @@ function getFormData() {
     }
     // Prepend the new image URL
     data.images = [imageUrl, ...images];
-  } else {
-    // If imageUrl is cleared, what should happen to images array? 
-    // For now, let's leave it alone or maybe clear it if it was only containing that one image.
-    // Safest is to not modify data.images if imageUrl is empty, 
-    // OR if we want to support clearing images, we might need more logic.
-    // Given the request, let's just focus on ADDING/UPDATING the image.
   }
 
   return data;
@@ -423,6 +452,130 @@ function generateSearchIndex(data) {
   return searchableFields;
 }
 
+// ===== Staff Recommendations Management =====
+
+function addStaffRecommendationEntry(staffName = '', reason = '') {
+  const entryId = Date.now();
+  const entry = document.createElement('div');
+  entry.className = 'staff-recommendation-entry';
+  entry.setAttribute('data-entry-id', entryId);
+
+  entry.innerHTML = `
+    <button type="button" class="remove-recommendation-btn" onclick="removeStaffRecommendationEntry(${entryId})">
+      <span class="iconify" data-icon="ant-design:close-outlined"></span>
+    </button>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Staff Name</label>
+        <input type="text" class="staff-name-input" value="${staffName}" placeholder="e.g. John"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Why They Recommend It</label>
+        <textarea class="staff-reason-input" rows="2" placeholder="What makes this game special?">${reason}</textarea>
+      </div>
+    </div>
+  `;
+
+  staffRecommendationsContainer.appendChild(entry);
+}
+
+function removeStaffRecommendationEntry(entryId) {
+  const entry = document.querySelector(`[data-entry-id="${entryId}"]`);
+  if (entry) {
+    entry.remove();
+  }
+}
+
+// Make removeStaffRecommendationEntry available globally for onclick
+window.removeStaffRecommendationEntry = removeStaffRecommendationEntry;
+
+function getStaffRecommendations() {
+  const entries = staffRecommendationsContainer.querySelectorAll('.staff-recommendation-entry');
+  const recommendations = [];
+
+  entries.forEach(entry => {
+    const staffName = entry.querySelector('.staff-name-input').value.trim();
+    const reason = entry.querySelector('.staff-reason-input').value.trim();
+
+    if (staffName || reason) {
+      recommendations.push({
+        staffName: staffName || 'Staff Member',
+        reason: reason || '',
+        addedAt: firebase.firestore.Timestamp.now()
+      });
+    }
+  });
+
+  return recommendations;
+}
+
+function setStaffRecommendations(recommendations) {
+  // Clear existing entries
+  staffRecommendationsContainer.innerHTML = '';
+
+  if (!recommendations || !Array.isArray(recommendations)) return;
+
+  recommendations.forEach(rec => {
+    addStaffRecommendationEntry(rec.staffName || '', rec.reason || '');
+  });
+}
+
+// ===== Featured Game of the Month Management =====
+
+function toggleFeaturedFields() {
+  if (isFeaturedCheckbox.checked) {
+    featuredMonthFields.classList.remove('hidden');
+  } else {
+    featuredMonthFields.classList.add('hidden');
+  }
+}
+
+async function unsetPreviousFeaturedGame(excludeDocId = null) {
+  try {
+    // Find all games currently marked as featured
+    const snapshot = await db.collection('games')
+      .where('isFeaturedGameOfMonth', '==', true)
+      .get();
+
+    const batch = db.batch();
+    let unsetCount = 0;
+
+    snapshot.docs.forEach(doc => {
+      if (doc.id !== excludeDocId) {
+        batch.update(doc.ref, { isFeaturedGameOfMonth: false });
+        unsetCount++;
+      }
+    });
+
+    if (unsetCount > 0) {
+      await batch.commit();
+      console.log(`Unset ${unsetCount} previous featured game(s)`);
+    }
+  } catch (error) {
+    console.error('Error unsetting previous featured games:', error);
+    throw error;
+  }
+}
+
+async function addToFeaturedHistory(gameId, gameTitle, imageUrl, month, year) {
+  try {
+    await db.collection('featuredGamesHistory').add({
+      gameId: gameId,
+      gameTitle: gameTitle,
+      imageUrl: imageUrl || '',
+      month: month,
+      year: parseInt(year) || new Date().getFullYear(),
+      featuredAt: firebase.firestore.Timestamp.now()
+    });
+    console.log('Added to featured games history');
+  } catch (error) {
+    console.error('Error adding to featured history:', error);
+    // Non-critical, don't throw
+  }
+}
+
 // ===== CRUD Operations =====
 
 async function createGame(data) {
@@ -433,8 +586,24 @@ async function createGame(data) {
     // Generate search index
     data.searchIndex = generateSearchIndex(data);
 
+    // If this is a featured game, unset any previous featured games first
+    if (data.isFeaturedGameOfMonth) {
+      await unsetPreviousFeaturedGame();
+    }
+
     // Add to Firestore
-    await db.collection('games').add(data);
+    const docRef = await db.collection('games').add(data);
+
+    // If featured, add to history
+    if (data.isFeaturedGameOfMonth && data.featuredMonth) {
+      await addToFeaturedHistory(
+        docRef.id,
+        data.title,
+        data.imageUrl,
+        data.featuredMonth,
+        data.featuredYear
+      );
+    }
 
     showSuccessToast(`Game "${data.title}" created successfully!`);
     clearForm();
@@ -462,6 +631,26 @@ async function updateGame(docId, data) {
 
     // Update search index
     data.searchIndex = generateSearchIndex(data);
+
+    // Check if we're newly featuring this game
+    const wasAlreadyFeatured = selectedGame && selectedGame.isFeaturedGameOfMonth === true;
+    const isNowFeatured = data.isFeaturedGameOfMonth === true;
+
+    // If this is being featured and wasn't before, unset any previous featured games
+    if (isNowFeatured && !wasAlreadyFeatured) {
+      await unsetPreviousFeaturedGame(docId);
+
+      // Add to history if month is specified
+      if (data.featuredMonth) {
+        await addToFeaturedHistory(
+          docId,
+          data.title,
+          data.imageUrl,
+          data.featuredMonth,
+          data.featuredYear
+        );
+      }
+    }
 
     // Update in Firestore
     await db.collection('games').doc(docId).update(data);
@@ -675,6 +864,14 @@ document.addEventListener('keydown', (e) => {
     closeDeleteModal();
   }
 });
+
+// Staff Recommendations
+addStaffRecommendationBtn.addEventListener('click', () => {
+  addStaffRecommendationEntry();
+});
+
+// Featured Game of the Month toggle
+isFeaturedCheckbox.addEventListener('change', toggleFeaturedFields);
 
 // Initialize
 console.log('Admin page initialized');

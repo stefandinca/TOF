@@ -84,6 +84,9 @@ async function loadGames() {
     filteredGames = [...allGames];
     sortGames();
     renderGames();
+
+    // Load past featured games
+    loadPastFeaturedGames();
   } catch (error) {
     console.error('Error loading games:', error);
     gamesGrid.innerHTML = `
@@ -120,6 +123,67 @@ function extractCategoriesAndMechanics() {
 
   allCategories = [...categoriesSet].sort();
   allMechanics = [...mechanicsSet].sort();
+}
+
+// Load and display past featured games
+async function loadPastFeaturedGames() {
+  try {
+    const pastGOTMSection = document.getElementById('pastGOTMSection');
+    const pastGOTMGrid = document.getElementById('pastGOTMGrid');
+
+    if (!pastGOTMSection || !pastGOTMGrid) return;
+
+    // Query the featuredGamesHistory collection
+    const snapshot = await db.collection('featuredGamesHistory')
+      .orderBy('featuredAt', 'desc')
+      .limit(6)
+      .get();
+
+    if (snapshot.empty) {
+      pastGOTMSection.classList.add('hidden');
+      return;
+    }
+
+    pastGOTMSection.classList.remove('hidden');
+    pastGOTMGrid.innerHTML = '';
+
+    snapshot.docs.forEach(doc => {
+      const data = doc.data();
+      const card = document.createElement('div');
+      card.className = 'past-gotm-card';
+      card.setAttribute('data-game-id', data.gameId);
+
+      card.innerHTML = `
+        <div class="past-gotm-card-image">
+          ${data.imageUrl
+            ? `<img src="${data.imageUrl}" alt="${data.gameTitle}" loading="lazy" />`
+            : '<span class="iconify" data-icon="ant-design:trophy-outlined" style="font-size: 2rem; opacity: 0.3;"></span>'
+          }
+        </div>
+        <div class="past-gotm-card-content">
+          <div class="past-gotm-card-title">${data.gameTitle || 'Unknown Game'}</div>
+          <div class="past-gotm-card-date">${data.month || ''} ${data.year || ''}</div>
+        </div>
+      `;
+
+      // Click handler to show game detail
+      card.addEventListener('click', () => {
+        const game = allGames.find(g => g.id === data.gameId);
+        if (game) {
+          showGameDetail(game);
+        }
+      });
+
+      pastGOTMGrid.appendChild(card);
+    });
+  } catch (error) {
+    console.error('Error loading past featured games:', error);
+    // Silently fail - the section just won't show
+    const pastGOTMSection = document.getElementById('pastGOTMSection');
+    if (pastGOTMSection) {
+      pastGOTMSection.classList.add('hidden');
+    }
+  }
 }
 
 // Populate checkbox groups
@@ -458,6 +522,19 @@ function sortGames() {
   const sortBy = sortSelect.value;
 
   filteredGames.sort((a, b) => {
+    // Priority 1: Featured Game of the Month always first
+    const aIsFeatured = a.isFeaturedGameOfMonth === true;
+    const bIsFeatured = b.isFeaturedGameOfMonth === true;
+    if (aIsFeatured && !bIsFeatured) return -1;
+    if (!aIsFeatured && bIsFeatured) return 1;
+
+    // Priority 2: Staff Recommended games next
+    const aIsStaffPick = a.staffRecommendations && a.staffRecommendations.length > 0;
+    const bIsStaffPick = b.staffRecommendations && b.staffRecommendations.length > 0;
+    if (aIsStaffPick && !bIsStaffPick) return -1;
+    if (!aIsStaffPick && bIsStaffPick) return 1;
+
+    // Priority 3: Regular sort criteria
     if (sortBy === 'title') {
       return (a.title || '').localeCompare(b.title || '');
     } else if (sortBy === 'rating') {
@@ -513,6 +590,9 @@ function renderGames() {
   if (filteredGames.length === 0) {
     noResults.classList.remove('hidden');
     resultsCount.classList.add('hidden');
+
+    // Show staff picks suggestions when no results found
+    renderStaffPicksSuggestion();
     return;
   }
 
@@ -524,6 +604,46 @@ function renderGames() {
     const card = createGameCard(game);
     gamesGrid.appendChild(card);
   });
+}
+
+// Render staff picks suggestion when no results found
+function renderStaffPicksSuggestion() {
+  // Get staff recommended games
+  const staffPicks = allGames.filter(g =>
+    g.staffRecommendations && g.staffRecommendations.length > 0
+  ).slice(0, 4);
+
+  if (staffPicks.length === 0) return;
+
+  // Remove any existing suggestion
+  const existingSuggestion = document.querySelector('.staff-picks-suggestion');
+  if (existingSuggestion) {
+    existingSuggestion.remove();
+  }
+
+  // Create suggestion container
+  const suggestionContainer = document.createElement('div');
+  suggestionContainer.className = 'staff-picks-suggestion';
+  suggestionContainer.innerHTML = `
+    <div class="staff-picks-suggestion-header">
+      <h3 class="staff-picks-suggestion-title">
+        <span class="iconify" data-icon="ant-design:star-filled"></span>
+        Check Out Our Staff Picks
+      </h3>
+      <p class="staff-picks-suggestion-subtitle">Hand-picked recommendations from our team</p>
+    </div>
+    <div class="staff-picks-grid"></div>
+  `;
+
+  const grid = suggestionContainer.querySelector('.staff-picks-grid');
+
+  staffPicks.forEach(game => {
+    const card = createGameCard(game);
+    grid.appendChild(card);
+  });
+
+  // Append after noResults
+  noResults.appendChild(suggestionContainer);
 }
 
 // Create game card
@@ -553,6 +673,10 @@ function createGameCard(game) {
     statusBadgesHTML += '</div>';
   }
 
+  // Staff Pick and GOTM chip logic (for meta section)
+  const isStaffPick = game.staffRecommendations && game.staffRecommendations.length > 0;
+  const isFeaturedGOTM = game.isFeaturedGameOfMonth === true;
+
   card.innerHTML = `
     <div class="game-image">
       ${rankBadgeHTML}
@@ -565,6 +689,8 @@ function createGameCard(game) {
     <h3 class="game-title">${game.title || 'Untitled Game'}</h3>
     <p class="game-publisher">${game.publisher || 'Unknown Publisher'}</p>
     <div class="game-meta">
+      ${isFeaturedGOTM ? `<span class="meta-badge gotm"><span class="iconify" data-icon="ant-design:trophy-filled"></span> Game of the Month</span>` : ''}
+      ${isStaffPick ? `<span class="meta-badge staff-pick"><span class="iconify" data-icon="ant-design:star-filled"></span> Staff Pick</span>` : ''}
       ${game.inventoryCategory ? `<span class="meta-badge category">${game.inventoryCategory}</span>` : ''}
       ${game.gameMode ? `<span class="meta-badge mode">${game.gameMode}</span>` : ''}
       ${playerInfo ? `<span class="meta-badge"><span class="iconify" data-icon="ant-design:team-outlined"></span> ${playerInfo}</span>` : ''}
@@ -727,6 +853,24 @@ function showGameDetail(game) {
       ` : ''}
 
       <div class="detail-grid">
+        ${game.isFeaturedGameOfMonth ? `
+          <div class="detail-item detail-item-gotm">
+            <div class="detail-item-label">Featured</div>
+            <div class="detail-item-value">
+              <span class="iconify" data-icon="ant-design:trophy-filled"></span> Game of the Month
+              ${game.featuredMonth ? `<div style="font-size: 0.8em; font-weight: normal; margin-top: 4px;">${game.featuredMonth}${game.featuredYear ? ` ${game.featuredYear}` : ''}</div>` : ''}
+            </div>
+          </div>
+        ` : ''}
+        ${(game.staffRecommendations && game.staffRecommendations.length > 0) ? `
+          <div class="detail-item detail-item-staff-pick">
+            <div class="detail-item-label">Recommended</div>
+            <div class="detail-item-value">
+              <span class="iconify" data-icon="ant-design:star-filled"></span> Staff Pick
+              <div style="font-size: 0.8em; font-weight: normal; margin-top: 4px;">${game.staffRecommendations.length} staff recommendation${game.staffRecommendations.length > 1 ? 's' : ''}</div>
+            </div>
+          </div>
+        ` : ''}
         ${playerInfo ? `
           <div class="detail-item clickable-filter" data-filter-type="players" data-filter-value="${game.playerCountMin}">
             <div class="detail-item-label">Players</div>
@@ -817,6 +961,23 @@ function showGameDetail(game) {
         <div class="detail-section">
           <div class="detail-label">Notes</div>
           <div class="detail-value">${game.notes}</div>
+        </div>
+      ` : ''}
+
+      ${(game.staffRecommendations && game.staffRecommendations.length > 0) ? `
+        <div class="detail-section staff-recommendations-section">
+          <div class="detail-label">
+            <span class="iconify" data-icon="ant-design:star-filled"></span>
+            Why Our Staff Recommends This
+          </div>
+          <div class="staff-recommendations-list">
+            ${game.staffRecommendations.map(rec => `
+              <div class="staff-recommendation-item">
+                <div class="staff-name">${rec.staffName || 'Staff Member'}</div>
+                <div class="staff-reason">"${rec.reason || 'A great game!'}"</div>
+              </div>
+            `).join('')}
+          </div>
         </div>
       ` : ''}
 

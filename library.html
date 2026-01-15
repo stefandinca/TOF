@@ -209,6 +209,27 @@
         <!-- Results Count -->
         <div id="resultsCount" class="text-center text-sm py-3 hidden"></div>
 
+        <!-- Game of the Month Banner -->
+        <div id="gotmBanner" class="gotm-banner hidden">
+          <div class="gotm-banner-content">
+            <div class="gotm-banner-image">
+              <img id="gotmBannerImage" src="" alt="Game of the Month" />
+            </div>
+            <div class="gotm-banner-info">
+              <div class="gotm-banner-label">
+                <span class="iconify" data-icon="ant-design:trophy-filled"></span>
+                Game of the Month
+              </div>
+              <h3 id="gotmBannerTitle" class="gotm-banner-title"></h3>
+              <p id="gotmBannerDate" class="gotm-banner-date"></p>
+            </div>
+            <div class="gotm-banner-action">
+              <span class="gotm-banner-cta">View All Past Winners</span>
+              <span class="iconify" data-icon="ant-design:right-outlined"></span>
+            </div>
+          </div>
+        </div>
+
         <!-- Games Grid -->
         <div id="gamesGrid" class="games-grid"></div>
 
@@ -230,6 +251,18 @@
         <div id="gameDetailContent" class="detail-content"></div>
       </div>
     </main>
+  </div>
+
+  <!-- Past Games of the Month Section -->
+  <div id="pastGOTMSection" class="past-gotm-section hidden">
+    <div class="past-gotm-header">
+      <h3 class="past-gotm-title">
+        <span class="iconify" data-icon="ant-design:trophy-filled"></span>
+        Past Games of the Month
+      </h3>
+      <p class="past-gotm-subtitle">Previously featured games from our collection</p>
+    </div>
+    <div id="pastGOTMGrid" class="past-gotm-grid"></div>
   </div>
 
   <!-- Footer -->

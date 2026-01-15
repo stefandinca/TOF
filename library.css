@@ -747,6 +747,250 @@
   display: none !important;
 }
 
+/* ========== Staff Pick & GOTM Meta Badges ========== */
+.meta-badge.gotm {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  border-color: #FFD700;
+  color: #180F1E;
+  font-weight: 700;
+}
+
+.meta-badge.gotm .iconify {
+  color: #180F1E;
+}
+
+.meta-badge.staff-pick {
+  background: linear-gradient(135deg, var(--accent), #FF6B4A);
+  border-color: var(--accent);
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+.meta-badge.staff-pick .iconify {
+  color: #FFD700;
+}
+
+/* ========== Detail View - GOTM & Staff Pick Items ========== */
+.detail-item-gotm {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.15));
+  border: 2px solid rgba(255, 215, 0, 0.5);
+}
+
+.detail-item-gotm .detail-item-label {
+  color: #FFD700;
+}
+
+.detail-item-gotm .detail-item-value {
+  color: #FFD700;
+}
+
+.detail-item-gotm .detail-item-value .iconify {
+  color: #FFD700;
+}
+
+.detail-item-staff-pick {
+  background: linear-gradient(135deg, rgba(240, 94, 55, 0.2), rgba(255, 107, 74, 0.15));
+  border: 2px solid rgba(240, 94, 55, 0.5);
+}
+
+.detail-item-staff-pick .detail-item-label {
+  color: var(--accent);
+}
+
+.detail-item-staff-pick .detail-item-value {
+  color: var(--accent);
+}
+
+.detail-item-staff-pick .detail-item-value .iconify {
+  color: #FFD700;
+}
+
+/* ========== Staff Recommendations Section (Detail View) ========== */
+.staff-recommendations-section {
+  background: linear-gradient(135deg, rgba(240, 94, 55, 0.1), rgba(255, 107, 74, 0.05));
+  border: 2px solid rgba(240, 94, 55, 0.3);
+  border-radius: 1rem;
+  padding: 24px;
+}
+
+.staff-recommendations-section .detail-label {
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.staff-recommendations-section .detail-label .iconify {
+  font-size: 1.25rem;
+  color: #FFD700;
+}
+
+.staff-recommendations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.staff-recommendation-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  padding: 16px;
+}
+
+.staff-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.staff-name::before {
+  content: '—';
+  color: var(--ui);
+}
+
+.staff-reason {
+  font-size: 0.95rem;
+  font-style: italic;
+  color: var(--text);
+  line-height: 1.6;
+  padding-left: 20px;
+  border-left: 3px solid var(--ui);
+}
+
+/* ========== Past Games of the Month Section ========== */
+.past-gotm-section {
+  max-width: 1400px;
+  margin: 60px auto 0;
+  padding: 0 20px 40px;
+}
+
+.past-gotm-header {
+  text-align: center;
+  margin-bottom: 32px;
+  padding-top: 40px;
+  border-top: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.past-gotm-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #FFD700;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.past-gotm-title .iconify {
+  font-size: 1.5rem;
+}
+
+.past-gotm-subtitle {
+  font-size: 1rem;
+  color: var(--text);
+  opacity: 0.8;
+}
+
+.past-gotm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.past-gotm-card {
+  background: rgba(255, 215, 0, 0.05);
+  border: 2px solid rgba(255, 215, 0, 0.2);
+  border-radius: 1rem;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.past-gotm-card:hover {
+  transform: translateY(-8px);
+  border-color: #FFD700;
+  box-shadow: 0 12px 24px rgba(255, 215, 0, 0.2);
+}
+
+.past-gotm-card-image {
+  height: 140px;
+  background: linear-gradient(135deg, rgba(88, 10, 205, 0.2), rgba(255, 215, 0, 0.1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.past-gotm-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.past-gotm-card-content {
+  padding: 16px;
+}
+
+.past-gotm-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.past-gotm-card-date {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #FFD700;
+}
+
+/* ========== Staff Picks Suggestions (No Results State) ========== */
+.staff-picks-suggestion {
+  margin-top: 32px;
+  padding-top: 32px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.staff-picks-suggestion-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.staff-picks-suggestion-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.staff-picks-suggestion-subtitle {
+  font-size: 0.9rem;
+  color: var(--text);
+  opacity: 0.7;
+  margin-top: 4px;
+}
+
+.staff-picks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
 /* Responsive Media Queries */
 @media (max-width: 1024px) {
   .filters-sidebar.desktop-filters {
@@ -774,12 +1018,61 @@
   .search-input {
     min-width: 0;
   }
-  
+
   .detail-container {
     padding: 20px;
   }
 
   .detail-game-title {
     font-size: 1.8rem;
+  }
+
+  /* Staff Pick & GOTM Meta Badges - Mobile */
+  .meta-badge.gotm,
+  .meta-badge.staff-pick {
+    font-size: 0.65rem;
+    padding: 3px 8px;
+  }
+
+  /* Staff Recommendations - Mobile */
+  .staff-recommendations-section {
+    padding: 16px;
+  }
+
+  .staff-recommendation-item {
+    padding: 12px;
+  }
+
+  .staff-name {
+    font-size: 0.85rem;
+  }
+
+  .staff-reason {
+    font-size: 0.85rem;
+    padding-left: 12px;
+  }
+
+  /* Past GOTM Section - Mobile */
+  .past-gotm-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .past-gotm-title {
+    font-size: 1.25rem;
+  }
+
+  .past-gotm-card-image {
+    height: 100px;
+  }
+}
+
+@media (max-width: 480px) {
+  .past-gotm-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .staff-picks-grid {
+    grid-template-columns: 1fr;
   }
 }
