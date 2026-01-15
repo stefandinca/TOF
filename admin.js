@@ -248,11 +248,13 @@ function setFormData(game) {
   document.getElementById('gameId').value = game.gameId || '';
   document.getElementById('publisher').value = game.publisher || '';
   document.getElementById('imageUrl').value = game.imageUrl || '';
+  document.getElementById('bggRank').value = game.bggRank || '';
   document.getElementById('description').value = game.description || '';
 
   // Gameplay Details
   document.getElementById('playerCountMin').value = game.playerCountMin || '';
   document.getElementById('playerCountMax').value = game.playerCountMax || '';
+  document.getElementById('recommendedPlayers').value = game.recommendedPlayers || '';
   document.getElementById('playTimeMin').value = game.playTimeMin || '';
   document.getElementById('playTimeMax').value = game.playTimeMax || '';
   document.getElementById('age').value = game.age || '';
@@ -308,11 +310,13 @@ function getFormData() {
     gameId: document.getElementById('gameId').value.trim(),
     publisher: document.getElementById('publisher').value.trim(),
     imageUrl: document.getElementById('imageUrl').value.trim(),
+    bggRank: parseInt(document.getElementById('bggRank').value) || null,
     description: document.getElementById('description').value.trim(),
 
     // Gameplay Details
     playerCountMin: parseInt(document.getElementById('playerCountMin').value) || 0,
     playerCountMax: document.getElementById('playerCountMax').value.trim(),
+    recommendedPlayers: document.getElementById('recommendedPlayers').value.trim(),
     playTimeMin: parseInt(document.getElementById('playTimeMin').value) || 0,
     playTimeMax: parseInt(document.getElementById('playTimeMax').value) || 0,
     age: document.getElementById('age').value.trim(),
@@ -346,6 +350,26 @@ function getFormData() {
     playTested: document.getElementById('playTested').value.trim(),
     notes: document.getElementById('notes').value.trim()
   };
+
+  // Sync images array with imageUrl
+  const imageUrl = data.imageUrl;
+  if (imageUrl) {
+    let images = [];
+    if (selectedGame && selectedGame.images) {
+      // Filter out the new image URL if it already exists to avoid duplicates
+      images = selectedGame.images.filter(img => img !== imageUrl);
+    }
+    // Prepend the new image URL
+    data.images = [imageUrl, ...images];
+  } else {
+    // If imageUrl is cleared, what should happen to images array? 
+    // For now, let's leave it alone or maybe clear it if it was only containing that one image.
+    // Safest is to not modify data.images if imageUrl is empty, 
+    // OR if we want to support clearing images, we might need more logic.
+    // Given the request, let's just focus on ADDING/UPDATING the image.
+  }
+
+  return data;
 }
 
 // ===== Form Validation =====

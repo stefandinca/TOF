@@ -198,8 +198,14 @@ function createGameCard(game) {
   const playerInfo = formatPlayerCount(game.playerCountMin, game.playerCountMax);
   const timeInfo = formatPlayTime(game.playTimeMin, game.playTimeMax);
 
+  // Rank Badge logic
+  const rankBadgeHTML = (game.bggRank && game.bggRank <= 100) 
+    ? `<div class="rank-badge">Rank - ${game.bggRank} on BGG</div>` 
+    : '';
+
   card.innerHTML = `
     <div class="game-image">
+      ${rankBadgeHTML}
       ${game.imageUrl ?
         `<img src="${game.imageUrl}" alt="${game.title}" loading="lazy" />` :
         '<div class="game-image-placeholder"><span class="iconify" data-icon="ant-design:trophy-outlined" style="font-size: 3rem;"></span></div>'
@@ -303,12 +309,18 @@ function showGameDetail(game) {
   // Prepare images for slider
   const images = game.images && game.images.length > 0 ? game.images : (game.imageUrl ? [game.imageUrl] : []);
 
+  // Rank Badge logic
+  const rankBadgeHTML = (game.bggRank && game.bggRank <= 100) 
+    ? `<div class="rank-badge">Rank - ${game.bggRank} on BGG</div>` 
+    : '';
+
   let imageSectionHTML = '';
 
   if (images.length > 1) {
     // Slider HTML
     imageSectionHTML = `
       <div class="detail-game-image-container">
+        ${rankBadgeHTML}
         <div class="detail-game-image" id="gameImageSlider">
           <img src="${images[0]}" alt="${game.title}" id="sliderImage" />
         </div>
@@ -323,6 +335,7 @@ function showGameDetail(game) {
     // Single Image HTML
     imageSectionHTML = `
       <div class="detail-game-image-container">
+        ${rankBadgeHTML}
         <div class="detail-game-image">
           <img src="${images[0]}" alt="${game.title}" />
         </div>
@@ -351,7 +364,10 @@ function showGameDetail(game) {
         ${playerInfo ? `
           <div class="detail-item">
             <div class="detail-item-label">Players</div>
-            <div class="detail-item-value"><span class="iconify" data-icon="ant-design:team-outlined"></span> ${playerInfo}</div>
+            <div class="detail-item-value">
+              <span class="iconify" data-icon="ant-design:team-outlined"></span> ${playerInfo}
+              ${game.recommendedPlayers ? `<div style="font-size: 0.8em; font-weight: normal; margin-top: 4px; color: var(--accent);">Best: ${game.recommendedPlayers}</div>` : ''}
+            </div>
           </div>
         ` : ''}
         ${timeInfo ? `
@@ -525,9 +541,14 @@ function renderSimilarGames(currentGame) {
     const playerInfo = formatPlayerCount(game.playerCountMin, game.playerCountMax);
     const timeInfo = formatPlayTime(game.playTimeMin, game.playTimeMax);
 
+    const rankBadgeHTML = (game.bggRank && game.bggRank <= 100) 
+      ? `<div class="rank-badge" style="font-size: 0.6rem; padding: 2px 6px;">#${game.bggRank} on BGG</div>` 
+      : '';
+
     similarGamesHTML += `
       <div class="similar-game-card" data-game-id="${game.id}">
         <div class="similar-game-image">
+          ${rankBadgeHTML}
           ${game.imageUrl ?
             `<img src="${game.imageUrl}" alt="${game.title}" loading="lazy" />` :
             '<div class="game-image-placeholder"><span class="iconify" data-icon="ant-design:trophy-outlined"></span></div>'

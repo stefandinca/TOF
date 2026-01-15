@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twist of Fate Board Game Café</title>
+    <style>
+        /* Email client resets */
+        body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+        img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+        table { border-collapse: collapse !important; }
+        body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
+
+        /* Custom Styles - Using TOF Palette */
+        :root {
+            --bg: #180F1E;
+            --ui: #580ACA;
+            --accent: #F05E37;
+            --text: #F7E0CB;
+        }
+
+        body {
+            background-color: #180F1E;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #F7E0CB;
+        }
+
+        .email-wrapper {
+            width: 100%;
+            table-layout: fixed;
+            background-color: #180F1E;
+            padding-bottom: 40px;
+        }
+
+        .email-content {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #180F1E;
+            border: 2px solid #580ACA;
+            border-radius: 16px;
+            overflow: hidden;
+            margin-top: 40px;
+        }
+
+        .header {
+            background-color: #580ACA;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .logo {
+            max-width: 200px;
+            height: auto;
+        }
+
+        .hero-image {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .body-content {
+            padding: 40px 30px;
+            line-height: 1.6;
+        }
+
+        .headline {
+            color: #F05E37;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .text {
+            font-size: 16px;
+            margin-bottom: 25px;
+        }
+
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .button {
+            background-color: #F05E37;
+            color: #FFFFFF !important;
+            padding: 15px 35px;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: bold;
+            display: inline-block;
+            box-shadow: 0 4px 12px rgba(240, 94, 55, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .footer {
+            padding: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: rgba(247, 224, 203, 0.6);
+            background-color: rgba(88, 10, 205, 0.1);
+        }
+
+        .social-links {
+            margin-bottom: 20px;
+        }
+
+        .social-icon {
+            display: inline-block;
+            margin: 0 10px;
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media screen and (max-width: 600px) {
+            .email-content {
+                width: 90% !important;
+                margin-top: 20px;
+            }
+            .headline {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-wrapper">
+        <table class="email-content" width="100%" cellpadding="0" cellspacing="0">
+            <!-- Header -->
+            <tr>
+                <td class="header">
+                    <img src="img/TOF_Logo.png" alt="Twist of Fate Board Game Café" class="logo">
+                </td>
+            </tr>
+            
+            <!-- Optional Hero Image placeholder -->
+            <!-- 
+            <tr>
+                <td>
+                    <img src="https://via.placeholder.com/600x300/180F1E/F05E37?text=New+Games+Arrived" alt="Hero Banner" class="hero-image">
+                </td>
+            </tr>
+            -->
+
+            <!-- Body -->
+            <tr>
+                <td class="body-content">
+                    <h1 class="headline">New Adventures Await!</h1>
+                    <p class="text">
+                        Hello Board Game Enthusiast,<br><br>
+                        Something exciting is brewing at Twist of Fate. Our library has just been enriched with new titles, and we can't wait for you to experience them.
+                    </p>
+                    <p class="text">
+                        Whether you're looking for a quick competitive match or a deep cooperative strategy session, we have the perfect table waiting for you.
+                    </p>
+                    <div class="button-container">
+                        <a href="https://twistoffate.com/library" class="button">Explore the Library</a>
+                    </div>
+                    <p class="text">
+                        See you at the table,<br>
+                        <strong>The Twist of Fate Team</strong>
+                    </p>
+                </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+                <td class="footer">
+                    <div class="social-links">
+                        <!-- Add actual links here -->
+                        <a href="#" class="social-icon"><img src="img/instagram_logo.png" width="24" height="24" alt="Instagram"></a>
+                        <a href="#" class="social-icon"><img src="img/facebook_logo.png" width="24" height="24" alt="Facebook"></a>
+                        <a href="#" class="social-icon"><img src="img/youtube_logo.png" width="24" height="24" alt="YouTube"></a>
+                    </div>
+                    <p>&copy; 2026 Twist of Fate Board Game Café. All rights reserved.</p>
+                    <p>123 Game Street, Meeple City, GC 45678</p>
+                    <p><a href="#" style="color: #F05E37; text-decoration: none;">Unsubscribe</a> from our newsletter.</p>
+                </td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>

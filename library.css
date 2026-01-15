@@ -205,6 +205,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  position: relative; /* For rank badge positioning */
 }
 
 .game-image img {
@@ -216,6 +217,24 @@
 .game-image-placeholder {
   font-size: 3rem;
   opacity: 0.3;
+}
+
+/* Rank Badge */
+.rank-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #180F1E;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  z-index: 5;
+  border: 2px solid #FFFFFF;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* Loading Spinner */
@@ -661,6 +680,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  position: relative; /* For rank badge positioning */
 }
 
 .similar-game-image img {
