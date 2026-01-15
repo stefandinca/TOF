@@ -31,16 +31,20 @@
 .filters-sidebar {
   width: 280px;
   flex-shrink: 0;
+  align-self: flex-start;
 }
 
 .sidebar-content {
   position: sticky;
   top: 20px;
-  max-height: calc(100vh - 40px);
+  max-height: calc(130vh - 40px);
   overflow-y: auto;
-  padding-right: 10px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--ui) var(--bg);
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.sidebar-content::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Opera */
 }
 
 /* Filter Groups */
@@ -358,22 +362,22 @@
   padding: 4px 10px;
   border-radius: 12px;
   font-size: 0.75rem;
-  font-weight: 800;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-  border: 2px solid #FFFFFF;
+  border: 1px solid #FFFFFF;
   display: inline-block;
   white-space: nowrap;
 }
 
 .status-badge.library {
-  background: linear-gradient(135deg, var(--ui), #7a2be0);
+  background: linear-gradient(135deg, var(--ui), #792be06f);
   color: #FFFFFF;
 }
 
 .status-badge.retail {
-  background: linear-gradient(135deg, var(--accent), #ff8a6a);
+  background: linear-gradient(135deg, var(--accent), #ff8a6a6f);
   color: #180F1E;
 }
 
@@ -733,6 +737,8 @@
   .search-container {
     padding: 0 20px 24px;
     display: flex;
+    margin-left: 20%;
+    margin-right:20%;
   }
 
   .filter-toggle-btn {
