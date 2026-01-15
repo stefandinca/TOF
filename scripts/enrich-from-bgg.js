@@ -127,7 +127,9 @@ async function fetchGameDetails(bggId) {
         .trim();
 
       // Get image URL (prefer thumbnail for card view, but get full image for modal)
-      const imageUrl = item.image?.[0] || '';
+      // BGG API sometimes returns multiple images in item.image array
+      const images = item.image || [];
+      const imageUrl = images[0] || '';
       const thumbnailUrl = item.thumbnail?.[0] || imageUrl;
 
       // Get rating and other stats
@@ -145,12 +147,60 @@ async function fetchGameDetails(bggId) {
       // Get year published
       const yearPublished = item.yearpublished?.[0]?.$.value;
 
+      // Get BGG Rank (Overall Board Game Rank)
+      let bggRank = null;
+      if (item.statistics?.[0]?.ratings?.[0]?.ranks?.[0]?.rank) {
+        const rankObj = item.statistics[0].ratings[0].ranks[0].rank.find(r => r.$.name === 'boardgame');
+        if (rankObj && rankObj.$.value && rankObj.$.value !== 'Not Ranked') {
+          bggRank = parseInt(rankObj.$.value);
+        }
+      }
+
+      // Get Categories and Mechanics
+      const categories = item.link
+        .filter(l => l.$.type === 'boardgamecategory')
+        .map(l => l.$.value);
+      
+      const mechanics = item.link
+        .filter(l => l.$.type === 'boardgamemechanic')
+        .map(l => l.$.value);
+
+      // Get Recommended Players (from Poll)
+      let recommendedPlayers = null;
+      const polls = item.poll || [];
+      const playerPoll = polls.find(p => p.$.name === 'suggested_numplayers');
+      
+      if (playerPoll && playerPoll.results) {
+        let maxBestVotes = -1;
+        let bestCounts = [];
+
+        playerPoll.results.forEach(result => {
+          const numPlayers = result.$.numplayers;
+          // Find 'Best' votes
+          const bestVote = result.result.find(r => r.$.value === 'Best');
+          if (bestVote) {
+            const votes = parseInt(bestVote.$.numvotes);
+            if (votes > maxBestVotes) {
+              maxBestVotes = votes;
+              bestCounts = [numPlayers];
+            } else if (votes === maxBestVotes) {
+              bestCounts.push(numPlayers);
+            }
+          }
+        });
+
+        if (bestCounts.length > 0 && maxBestVotes > 0) {
+          recommendedPlayers = bestCounts.join(', ');
+        }
+      }
+
       return {
         bggId,
         name: primaryName,
         description: description.substring(0, 1000), // Limit description length
         imageUrl,
         thumbnailUrl,
+        images, // Store all images found
         rating: rating ? parseFloat(rating).toFixed(1) : null,
         complexity: complexity ? parseFloat(complexity).toFixed(2) : null,
         minPlayers: minPlayers ? parseInt(minPlayers) : null,
@@ -158,7 +208,11 @@ async function fetchGameDetails(bggId) {
         minPlayTime: minPlayTime ? parseInt(minPlayTime) : null,
         maxPlayTime: maxPlayTime ? parseInt(maxPlayTime) : null,
         age: age ? `${age}+` : null,
-        yearPublished: yearPublished ? parseInt(yearPublished) : null
+        yearPublished: yearPublished ? parseInt(yearPublished) : null,
+        categories,
+        mechanics,
+        bggRank,
+        recommendedPlayers
       };
     }
 
@@ -180,10 +234,15 @@ async function updateGameWithBGGData(gameId, bggData) {
     if (bggData.description) updateData.description = bggData.description;
     if (bggData.imageUrl) updateData.imageUrl = bggData.imageUrl;
     if (bggData.thumbnailUrl) updateData.thumbnailUrl = bggData.thumbnailUrl;
+    if (bggData.images && bggData.images.length > 0) updateData.images = bggData.images;
     if (bggData.rating) updateData.rating = bggData.rating;
     if (bggData.complexity) updateData.complexity = bggData.complexity;
     if (bggData.bggId) updateData.bggId = bggData.bggId;
     if (bggData.yearPublished) updateData.yearPublished = bggData.yearPublished;
+    if (bggData.categories && bggData.categories.length > 0) updateData.categories = bggData.categories;
+    if (bggData.mechanics && bggData.mechanics.length > 0) updateData.mechanics = bggData.mechanics;
+    if (bggData.bggRank) updateData.bggRank = bggData.bggRank;
+    if (bggData.recommendedPlayers) updateData.recommendedPlayers = bggData.recommendedPlayers;
 
     // Only update player count and play time if not already set
     // (prefer manual data over BGG data for these fields)
