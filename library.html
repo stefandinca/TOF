@@ -250,20 +250,28 @@
         </div>
         <div id="gameDetailContent" class="detail-content"></div>
       </div>
+
+      <!-- Past Games View -->
+      <div id="pastGamesView" class="past-gotm-view hidden">
+        <div class="detail-header">
+          <button id="backToLibFromPast" class="back-button">
+            <span class="iconify" data-icon="ant-design:arrow-left-outlined"></span>
+            Back to Library
+          </button>
+        </div>
+        <div class="past-gotm-view-header">
+          <h2 class="past-gotm-view-title">
+            <span class="iconify" data-icon="ant-design:trophy-filled"></span>
+            Past Games of the Month
+          </h2>
+          <p class="past-gotm-view-subtitle">A collection of our previously featured favorites</p>
+        </div>
+        <div id="pastGamesGrid" class="games-grid"></div>
+      </div>
     </main>
   </div>
 
-  <!-- Past Games of the Month Section -->
-  <div id="pastGOTMSection" class="past-gotm-section hidden">
-    <div class="past-gotm-header">
-      <h3 class="past-gotm-title">
-        <span class="iconify" data-icon="ant-design:trophy-filled"></span>
-        Past Games of the Month
-      </h3>
-      <p class="past-gotm-subtitle">Previously featured games from our collection</p>
-    </div>
-    <div id="pastGOTMGrid" class="past-gotm-grid"></div>
-  </div>
+
 
   <!-- Footer -->
   <div class="flex justify-center w-full border-t-2 border-t-(--accent) py-12"></div>

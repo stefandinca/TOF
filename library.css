@@ -863,95 +863,153 @@
   border-left: 3px solid var(--ui);
 }
 
-/* ========== Past Games of the Month Section ========== */
-.past-gotm-section {
-  max-width: 1400px;
-  margin: 60px auto 0;
-  padding: 0 20px 40px;
-}
+/* ========== Past Games of the Month Section (Legacy - Removed) ========== */
+/* Styles moved to .past-gotm-view */
 
-.past-gotm-header {
-  text-align: center;
+/* ========== Game of the Month Banner ========== */
+.gotm-banner {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 165, 0, 0.05));
+  border: 2px solid rgba(255, 215, 0, 0.5);
+  border-radius: 1rem;
   margin-bottom: 32px;
-  padding-top: 40px;
-  border-top: 2px solid rgba(255, 215, 0, 0.3);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  position: relative;
 }
 
-.past-gotm-title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #FFD700;
-  margin-bottom: 8px;
+.gotm-banner:hover {
+  transform: translateY(-4px);
+  border-color: #FFD700;
+  box-shadow: 0 12px 24px rgba(255, 215, 0, 0.15);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 165, 0, 0.1));
+}
+
+.gotm-banner-content {
+  display: flex;
+  align-items: center;
+  padding: 24px;
+  gap: 24px;
+}
+
+.gotm-banner-image {
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 0.5rem;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
 }
 
-.past-gotm-title .iconify {
-  font-size: 1.5rem;
+.gotm-banner-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
-.past-gotm-subtitle {
-  font-size: 1rem;
+.gotm-banner-info {
+  flex: 1;
+}
+
+.gotm-banner-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #FFD700;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+  letter-spacing: 0.05em;
+}
+
+.gotm-banner-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
+.gotm-banner-date {
+  color: rgba(247, 224, 203, 0.7);
+  font-size: 0.95rem;
+}
+
+.gotm-banner-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #FFD700;
+  font-weight: 600;
+  padding-left: 24px;
+  border-left: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.gotm-banner:hover .gotm-banner-action {
+  color: #FFF;
+}
+
+/* Mobile Banner */
+@media (max-width: 768px) {
+  .gotm-banner-content {
+    flex-direction: column;
+    text-align: center;
+    padding: 20px;
+    gap: 16px;
+  }
+
+  .gotm-banner-image {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto;
+  }
+
+  .gotm-banner-action {
+    border-left: none;
+    padding-left: 0;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 215, 0, 0.2);
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ========== Past Games of the Month View ========== */
+.past-gotm-view {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.past-gotm-view-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.past-gotm-view-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #FFD700;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.past-gotm-view-subtitle {
+  font-size: 1.1rem;
   color: var(--text);
   opacity: 0.8;
 }
 
 .past-gotm-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 20px;
-}
-
-.past-gotm-card {
-  background: rgba(255, 215, 0, 0.05);
-  border: 2px solid rgba(255, 215, 0, 0.2);
-  border-radius: 1rem;
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.past-gotm-card:hover {
-  transform: translateY(-8px);
-  border-color: #FFD700;
-  box-shadow: 0 12px 24px rgba(255, 215, 0, 0.2);
-}
-
-.past-gotm-card-image {
-  height: 140px;
-  background: linear-gradient(135deg, rgba(88, 10, 205, 0.2), rgba(255, 215, 0, 0.1));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.past-gotm-card-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.past-gotm-card-content {
-  padding: 16px;
-}
-
-.past-gotm-card-title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.past-gotm-card-date {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #FFD700;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 24px;
 }
 
 /* ========== Staff Picks Suggestions (No Results State) ========== */

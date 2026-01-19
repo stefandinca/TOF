@@ -63,6 +63,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (backButton) {
     backButton.addEventListener('click', showGameList);
   }
+
+  // Back button from Past Games listener
+  const backToLibFromPast = document.getElementById('backToLibFromPast');
+  if (backToLibFromPast) {
+    backToLibFromPast.addEventListener('click', showGameList);
+  }
 });
 
 // Load games from Firestore
@@ -84,6 +90,9 @@ async function loadGames() {
     filteredGames = [...allGames];
     sortGames();
     renderGames();
+
+    // Setup Game of the Month Banner
+    setupGOTMBanner();
 
     // Load past featured games
     loadPastFeaturedGames();
@@ -125,64 +134,105 @@ function extractCategoriesAndMechanics() {
   allMechanics = [...mechanicsSet].sort();
 }
 
+// Setup Game of the Month Banner
+function setupGOTMBanner() {
+  const gotmBanner = document.getElementById('gotmBanner');
+  const featuredGame = allGames.find(g => g.isFeaturedGameOfMonth === true);
+
+  if (!featuredGame || !gotmBanner) {
+    if (gotmBanner) gotmBanner.classList.add('hidden');
+    return;
+  }
+
+  // Populate banner
+  const bannerTitle = document.getElementById('gotmBannerTitle');
+  const bannerDate = document.getElementById('gotmBannerDate');
+  const bannerImage = document.getElementById('gotmBannerImage');
+
+  if (bannerTitle) bannerTitle.textContent = featuredGame.title;
+  if (bannerDate) bannerDate.textContent = `${featuredGame.featuredMonth || ''} ${featuredGame.featuredYear || ''}`;
+  
+  if (bannerImage) {
+    if (featuredGame.imageUrl) {
+      bannerImage.src = featuredGame.imageUrl;
+    } else {
+      bannerImage.src = 'img/tof_icon.png'; // Fallback
+    }
+  }
+
+  // Click handler to show Past Games View
+  gotmBanner.onclick = () => showPastGames();
+  
+  gotmBanner.classList.remove('hidden');
+}
+
+// Show Past Games View
+function showPastGames() {
+  const gameListView = document.getElementById('gameListView');
+  const gameDetailView = document.getElementById('gameDetailView');
+  const pastGamesView = document.getElementById('pastGamesView');
+
+  if (gameListView) gameListView.classList.add('hidden');
+  if (gameDetailView) gameDetailView.classList.add('hidden');
+  if (pastGamesView) pastGamesView.classList.remove('hidden');
+
+  window.scrollTo(0, 0);
+}
+
 // Load and display past featured games
 async function loadPastFeaturedGames() {
   try {
-    const pastGOTMSection = document.getElementById('pastGOTMSection');
-    const pastGOTMGrid = document.getElementById('pastGOTMGrid');
-
-    if (!pastGOTMSection || !pastGOTMGrid) return;
+    const pastGamesGrid = document.getElementById('pastGamesGrid');
+    if (!pastGamesGrid) return;
 
     // Query the featuredGamesHistory collection
+    // We order by featuredAt descending to get the most recent assignments first
     const snapshot = await db.collection('featuredGamesHistory')
       .orderBy('featuredAt', 'desc')
-      .limit(6)
       .get();
 
     if (snapshot.empty) {
-      pastGOTMSection.classList.add('hidden');
+      pastGamesGrid.innerHTML = '<p class="text-center py-12" style="grid-column: 1 / -1;">No past featured games found.</p>';
       return;
     }
 
-    pastGOTMSection.classList.remove('hidden');
-    pastGOTMGrid.innerHTML = '';
+    pastGamesGrid.innerHTML = '';
+    
+    // Map to track the most recent game for each month/year combination
+    // Since we ordered by featuredAt desc, the first one we see for a month is the latest
+    const seenMonths = new Set();
 
     snapshot.docs.forEach(doc => {
       const data = doc.data();
-      const card = document.createElement('div');
-      card.className = 'past-gotm-card';
-      card.setAttribute('data-game-id', data.gameId);
+      const monthYearKey = `${data.month}-${data.year}`.toLowerCase();
+      
+      // Overwrite/Skip logic: if we've already seen this month, skip subsequent (older) entries
+      if (seenMonths.has(monthYearKey)) return;
+      seenMonths.add(monthYearKey);
 
-      card.innerHTML = `
-        <div class="past-gotm-card-image">
-          ${data.imageUrl
-            ? `<img src="${data.imageUrl}" alt="${data.gameTitle}" loading="lazy" />`
-            : '<span class="iconify" data-icon="ant-design:trophy-outlined" style="font-size: 2rem; opacity: 0.3;"></span>'
-          }
-        </div>
-        <div class="past-gotm-card-content">
-          <div class="past-gotm-card-title">${data.gameTitle || 'Unknown Game'}</div>
-          <div class="past-gotm-card-date">${data.month || ''} ${data.year || ''}</div>
-        </div>
-      `;
-
-      // Click handler to show game detail
-      card.addEventListener('click', () => {
-        const game = allGames.find(g => g.id === data.gameId);
-        if (game) {
-          showGameDetail(game);
-        }
-      });
-
-      pastGOTMGrid.appendChild(card);
+      // Find the full game data from allGames to render the standard card
+      const game = allGames.find(g => g.id === data.gameId);
+      
+      if (game) {
+        // Clone the game object and ensure it shows as GOTM for the card rendering
+        // We also attach the specific month/year from history so it can be displayed
+        const gameForCard = { 
+          ...game, 
+          isFeaturedGameOfMonth: true,
+          featuredMonth: data.month,
+          featuredYear: data.year
+        };
+        
+        const card = createGameCard(gameForCard);
+        pastGamesGrid.appendChild(card);
+      }
     });
+
+    if (pastGamesGrid.children.length === 0) {
+      pastGamesGrid.innerHTML = '<p class="text-center py-12" style="grid-column: 1 / -1;">No past featured games found.</p>';
+    }
   } catch (error) {
     console.error('Error loading past featured games:', error);
-    // Silently fail - the section just won't show
-    const pastGOTMSection = document.getElementById('pastGOTMSection');
-    if (pastGOTMSection) {
-      pastGOTMSection.classList.add('hidden');
-    }
   }
 }
 
@@ -1220,9 +1270,11 @@ function renderSimilarGames(currentGame) {
 function showGameList() {
   const gameListView = document.getElementById('gameListView');
   const gameDetailView = document.getElementById('gameDetailView');
+  const pastGamesView = document.getElementById('pastGamesView');
 
-  gameDetailView.classList.add('hidden');
-  gameListView.classList.remove('hidden');
+  if (gameDetailView) gameDetailView.classList.add('hidden');
+  if (pastGamesView) pastGamesView.classList.add('hidden');
+  if (gameListView) gameListView.classList.remove('hidden');
 
   // Scroll to top
   window.scrollTo(0, 0);
@@ -1245,7 +1297,10 @@ function debounce(func, wait) {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     const gameDetailView = document.getElementById('gameDetailView');
-    if (gameDetailView && !gameDetailView.classList.contains('hidden')) {
+    const pastGamesView = document.getElementById('pastGamesView');
+    
+    if ((gameDetailView && !gameDetailView.classList.contains('hidden')) || 
+        (pastGamesView && !pastGamesView.classList.contains('hidden'))) {
       showGameList();
     }
   }
