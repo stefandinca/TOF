@@ -1330,10 +1330,456 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     const gameDetailView = document.getElementById('gameDetailView');
     const pastGamesView = document.getElementById('pastGamesView');
-    
-    if ((gameDetailView && !gameDetailView.classList.contains('hidden')) || 
+    const surveyModal = document.getElementById('surveyModal');
+
+    // Close survey modal first if open
+    if (surveyModal && !surveyModal.classList.contains('hidden')) {
+      closeSurveyModal();
+      return;
+    }
+
+    if ((gameDetailView && !gameDetailView.classList.contains('hidden')) ||
         (pastGamesView && !pastGamesView.classList.contains('hidden'))) {
       showGameList();
     }
   }
+});
+
+// ========== "What to Play" Survey ==========
+
+// Survey Questions Data
+const surveyQuestions = [
+  {
+    id: 'groupSize',
+    title: 'How big is your group?',
+    options: [
+      { value: '1', label: 'Solo', desc: 'Just me, myself, and I' },
+      { value: '2', label: '2 Players', desc: 'A cozy duo' },
+      { value: '3-4', label: '3-4 Players', desc: 'A small group of friends' },
+      { value: '5-6', label: '5-6 Players', desc: 'A bigger gathering' },
+      { value: '7+', label: '7+ Players', desc: 'Party time!' }
+    ]
+  },
+  {
+    id: 'timeAvailable',
+    title: 'How much time do you have?',
+    options: [
+      { value: 'quick', label: 'Quick Game', desc: 'Under 30 minutes' },
+      { value: 'medium', label: 'Medium Length', desc: '30-60 minutes' },
+      { value: 'long', label: 'Longer Session', desc: '1-2 hours' },
+      { value: 'epic', label: 'Epic Adventure', desc: '2+ hours' }
+    ]
+  },
+  {
+    id: 'mood',
+    title: 'What\'s the vibe you\'re going for?',
+    options: [
+      { value: 'competitive', label: 'Competitive', desc: 'Battle it out, winner takes all!' },
+      { value: 'cooperative', label: 'Cooperative', desc: 'Work together as a team' },
+      { value: 'social', label: 'Social/Party', desc: 'Laughs and casual fun' },
+      { value: 'strategic', label: 'Strategic', desc: 'Deep thinking and planning' }
+    ]
+  },
+  {
+    id: 'complexity',
+    title: 'How complex should the game be?',
+    options: [
+      { value: 'light', label: 'Easy to Learn', desc: 'Simple rules, quick to start' },
+      { value: 'medium-light', label: 'Some Strategy', desc: 'A bit more to think about' },
+      { value: 'medium', label: 'Medium Complexity', desc: 'Satisfying depth' },
+      { value: 'heavy', label: 'Brain Burner', desc: 'Complex and challenging' }
+    ]
+  },
+  {
+    id: 'experience',
+    title: 'What type of experience are you looking for?',
+    options: [
+      { value: 'party', label: 'Party/Social', desc: 'Fun games for groups' },
+      { value: 'strategy', label: 'Strategy', desc: 'Outwit your opponents' },
+      { value: 'adventure', label: 'Adventure', desc: 'Explore and discover' },
+      { value: 'any', label: 'Surprise Me!', desc: 'Open to anything' }
+    ]
+  },
+  {
+    id: 'familiar',
+    title: 'How familiar are you with board games?',
+    options: [
+      { value: 'beginner', label: 'Just Starting Out', desc: 'New to modern board games' },
+      { value: 'casual', label: 'Casual Player', desc: 'Play occasionally for fun' },
+      { value: 'regular', label: 'Regular Gamer', desc: 'Play often, know many games' },
+      { value: 'enthusiast', label: 'Board Game Enthusiast', desc: 'Experienced and adventurous' }
+    ]
+  }
+];
+
+// Survey State
+let currentQuestionIndex = 0;
+let surveyAnswers = {};
+let matchedGame = null;
+
+// Survey DOM Elements
+const surveyModal = document.getElementById('surveyModal');
+const whatToPlayBtn = document.getElementById('whatToPlayBtn');
+const closeSurveyBtn = document.getElementById('closeSurveyModal');
+const surveyQuestionsContainer = document.getElementById('surveyQuestions');
+const surveyProgressBar = document.getElementById('surveyProgressBar');
+const surveyProgressText = document.getElementById('surveyProgressText');
+const surveyPrevBtn = document.getElementById('surveyPrevBtn');
+const surveyNextBtn = document.getElementById('surveyNextBtn');
+const surveyResult = document.getElementById('surveyResult');
+const surveyNoMatch = document.getElementById('surveyNoMatch');
+const surveyNavigation = document.getElementById('surveyNavigation');
+const surveyResultCard = document.getElementById('surveyResultCard');
+const viewGameBtn = document.getElementById('viewGameBtn');
+const restartSurveyBtn = document.getElementById('restartSurveyBtn');
+const restartSurveyBtnNoMatch = document.getElementById('restartSurveyBtnNoMatch');
+
+// Initialize Survey
+function initSurvey() {
+  if (!whatToPlayBtn) return;
+
+  whatToPlayBtn.addEventListener('click', openSurveyModal);
+  closeSurveyBtn.addEventListener('click', closeSurveyModal);
+  surveyPrevBtn.addEventListener('click', goToPreviousQuestion);
+  surveyNextBtn.addEventListener('click', goToNextQuestion);
+  viewGameBtn.addEventListener('click', viewMatchedGame);
+  restartSurveyBtn.addEventListener('click', restartSurvey);
+  restartSurveyBtnNoMatch.addEventListener('click', restartSurvey);
+
+  // Close modal on backdrop click
+  surveyModal.addEventListener('click', (e) => {
+    if (e.target === surveyModal) closeSurveyModal();
+  });
+
+  renderSurveyQuestions();
+}
+
+// Open Survey Modal
+function openSurveyModal() {
+  surveyModal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  restartSurvey();
+}
+
+// Close Survey Modal
+function closeSurveyModal() {
+  surveyModal.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+// Render all survey questions
+function renderSurveyQuestions() {
+  surveyQuestionsContainer.innerHTML = surveyQuestions.map((question, qIndex) => `
+    <div class="survey-question ${qIndex === 0 ? 'active' : ''}" data-question="${question.id}">
+      <h3 class="survey-question-title">${question.title}</h3>
+      <div class="survey-options">
+        ${question.options.map(option => `
+          <div class="survey-option" data-value="${option.value}" data-question="${question.id}">
+            <div class="survey-option-radio"></div>
+            <div class="survey-option-content">
+              <div class="survey-option-label">${option.label}</div>
+              ${option.desc ? `<div class="survey-option-desc">${option.desc}</div>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  // Add click handlers to options
+  document.querySelectorAll('.survey-option').forEach(option => {
+    option.addEventListener('click', () => selectOption(option));
+  });
+}
+
+// Select an option
+function selectOption(optionElement) {
+  const questionId = optionElement.getAttribute('data-question');
+  const value = optionElement.getAttribute('data-value');
+
+  // Remove selection from siblings
+  const siblings = optionElement.parentElement.querySelectorAll('.survey-option');
+  siblings.forEach(sib => sib.classList.remove('selected'));
+
+  // Select this option
+  optionElement.classList.add('selected');
+  surveyAnswers[questionId] = value;
+
+  // Enable next button
+  surveyNextBtn.disabled = false;
+}
+
+// Update progress
+function updateProgress() {
+  const progress = ((currentQuestionIndex + 1) / surveyQuestions.length) * 100;
+  surveyProgressBar.style.width = `${progress}%`;
+  surveyProgressText.textContent = `Question ${currentQuestionIndex + 1} of ${surveyQuestions.length}`;
+}
+
+// Update navigation buttons
+function updateNavigation() {
+  surveyPrevBtn.disabled = currentQuestionIndex === 0;
+
+  const currentQuestion = surveyQuestions[currentQuestionIndex];
+  const hasAnswer = surveyAnswers[currentQuestion.id];
+  surveyNextBtn.disabled = !hasAnswer;
+
+  // Change button text on last question
+  if (currentQuestionIndex === surveyQuestions.length - 1) {
+    surveyNextBtn.innerHTML = `Find My Game <span class="iconify" data-icon="ant-design:search-outlined"></span>`;
+  } else {
+    surveyNextBtn.innerHTML = `Next <span class="iconify" data-icon="ant-design:arrow-right-outlined"></span>`;
+  }
+}
+
+// Show question
+function showQuestion(index) {
+  const questions = document.querySelectorAll('.survey-question');
+  questions.forEach((q, i) => {
+    q.classList.toggle('active', i === index);
+  });
+
+  // Restore selection if exists
+  const currentQuestion = surveyQuestions[index];
+  if (surveyAnswers[currentQuestion.id]) {
+    const selectedOption = document.querySelector(
+      `.survey-option[data-question="${currentQuestion.id}"][data-value="${surveyAnswers[currentQuestion.id]}"]`
+    );
+    if (selectedOption) {
+      selectedOption.classList.add('selected');
+    }
+  }
+
+  updateProgress();
+  updateNavigation();
+}
+
+// Go to previous question
+function goToPreviousQuestion() {
+  if (currentQuestionIndex > 0) {
+    currentQuestionIndex--;
+    showQuestion(currentQuestionIndex);
+  }
+}
+
+// Go to next question
+function goToNextQuestion() {
+  if (currentQuestionIndex < surveyQuestions.length - 1) {
+    currentQuestionIndex++;
+    showQuestion(currentQuestionIndex);
+  } else {
+    // Last question - find matching game
+    findMatchingGame();
+  }
+}
+
+// Find matching game based on answers
+function findMatchingGame() {
+  // Hide questions and navigation
+  surveyQuestionsContainer.classList.add('hidden');
+  surveyNavigation.classList.add('hidden');
+
+  // Score each game based on answers
+  const scoredGames = allGames
+    .filter(game => game.inventoryCategory === 'Base Game') // Only base games
+    .map(game => ({
+      game,
+      score: calculateGameScore(game)
+    }))
+    .filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  if (scoredGames.length > 0) {
+    // Pick randomly from top 5 matches for variety
+    const topMatches = scoredGames.slice(0, Math.min(5, scoredGames.length));
+    const randomIndex = Math.floor(Math.random() * topMatches.length);
+    matchedGame = topMatches[randomIndex].game;
+
+    // Show result
+    showSurveyResult(matchedGame);
+  } else {
+    // No match found
+    surveyNoMatch.classList.remove('hidden');
+    surveyResult.classList.add('hidden');
+  }
+}
+
+// Calculate match score for a game
+function calculateGameScore(game) {
+  let score = 0;
+  const answers = surveyAnswers;
+
+  // Group Size (weight: 30)
+  const groupSize = answers.groupSize;
+  const gameMin = game.playerCountMin || 1;
+  const gameMaxRaw = game.playerCountMax;
+  let gameMax = typeof gameMaxRaw === 'string' && gameMaxRaw.includes('+') ? 99 : (parseInt(gameMaxRaw) || gameMin);
+
+  if (groupSize === '1' && gameMin === 1) {
+    score += 30;
+  } else if (groupSize === '2' && gameMin <= 2 && gameMax >= 2) {
+    score += 30;
+  } else if (groupSize === '3-4' && gameMin <= 4 && gameMax >= 3) {
+    score += 30;
+  } else if (groupSize === '5-6' && gameMin <= 6 && gameMax >= 5) {
+    score += 30;
+  } else if (groupSize === '7+' && gameMax >= 7) {
+    score += 30;
+  } else {
+    // Partial match if close
+    if (groupSize === '7+' && gameMax >= 5) score += 10;
+    else if (groupSize === '5-6' && gameMax >= 4) score += 10;
+  }
+
+  // Time Available (weight: 20)
+  const timeAvailable = answers.timeAvailable;
+  const playTimeMin = game.playTimeMin || 0;
+  const playTimeMax = parseInt(game.playTimeMax) || playTimeMin;
+  const avgTime = (playTimeMin + playTimeMax) / 2;
+
+  if (timeAvailable === 'quick' && avgTime <= 30) {
+    score += 20;
+  } else if (timeAvailable === 'medium' && avgTime > 20 && avgTime <= 60) {
+    score += 20;
+  } else if (timeAvailable === 'long' && avgTime > 45 && avgTime <= 120) {
+    score += 20;
+  } else if (timeAvailable === 'epic' && avgTime > 90) {
+    score += 20;
+  } else {
+    // Partial match
+    if (timeAvailable === 'quick' && avgTime <= 45) score += 10;
+    else if (timeAvailable === 'medium' && avgTime <= 90) score += 10;
+    else if (timeAvailable === 'long' && avgTime > 30) score += 10;
+  }
+
+  // Mood/Game Mode (weight: 20)
+  const mood = answers.mood;
+  const gameMode = (game.gameMode || '').toLowerCase();
+
+  if (mood === 'competitive' && gameMode.includes('competitive')) {
+    score += 20;
+  } else if (mood === 'cooperative' && (gameMode.includes('cooperative') || gameMode.includes('coop'))) {
+    score += 20;
+  } else if (mood === 'social' && (gameMode.includes('party') || gameMode.includes('conversation'))) {
+    score += 20;
+  } else if (mood === 'strategic' && gameMode.includes('competitive')) {
+    score += 15; // Strategic often overlaps with competitive
+  }
+
+  // Complexity (weight: 15)
+  const complexityPref = answers.complexity;
+  const gameComplexity = parseFloat(game.complexity) || 0;
+
+  if (complexityPref === 'light' && gameComplexity >= 1 && gameComplexity < 2) {
+    score += 15;
+  } else if (complexityPref === 'medium-light' && gameComplexity >= 1.5 && gameComplexity < 2.75) {
+    score += 15;
+  } else if (complexityPref === 'medium' && gameComplexity >= 2.5 && gameComplexity < 3.75) {
+    score += 15;
+  } else if (complexityPref === 'heavy' && gameComplexity >= 3.5) {
+    score += 15;
+  } else if (gameComplexity > 0) {
+    // Partial match if somewhat close
+    score += 5;
+  }
+
+  // Experience Type (weight: 10)
+  const experience = answers.experience;
+  const categories = (game.categories || []).map(c => c.toLowerCase());
+
+  if (experience === 'party' && (categories.some(c => c.includes('party')) || gameMode.includes('party'))) {
+    score += 10;
+  } else if (experience === 'strategy' && categories.some(c => c.includes('strategy'))) {
+    score += 10;
+  } else if (experience === 'adventure' && categories.some(c => c.includes('adventure') || c.includes('exploration'))) {
+    score += 10;
+  } else if (experience === 'any') {
+    score += 10; // Open to anything
+  }
+
+  // Familiarity bonus (weight: 5)
+  const familiar = answers.familiar;
+
+  if (familiar === 'beginner' && gameComplexity < 2) {
+    score += 5;
+  } else if (familiar === 'casual' && gameComplexity < 2.5) {
+    score += 5;
+  } else if (familiar === 'regular') {
+    score += 5;
+  } else if (familiar === 'enthusiast' && gameComplexity >= 2.5) {
+    score += 5;
+  }
+
+  // Bonus for staff picks and high ratings
+  if (game.staffRecommendations && game.staffRecommendations.length > 0) {
+    score += 5;
+  }
+  if (game.rating && game.rating >= 7.5) {
+    score += 3;
+  }
+
+  return score;
+}
+
+// Show survey result
+function showSurveyResult(game) {
+  surveyResult.classList.remove('hidden');
+  surveyNoMatch.classList.add('hidden');
+
+  // Create a mini game card
+  const playerInfo = formatPlayerCount(game.playerCountMin, game.playerCountMax);
+  const timeInfo = formatPlayTime(game.playTimeMin, game.playTimeMax);
+  const isStaffPick = game.staffRecommendations && game.staffRecommendations.length > 0;
+
+  surveyResultCard.innerHTML = `
+    <div class="game-card">
+      <div class="game-image">
+        ${game.imageUrl ?
+          `<img src="${game.imageUrl}" alt="${game.title}" />` :
+          '<div class="game-image-placeholder"><span class="iconify" data-icon="ant-design:trophy-outlined" style="font-size: 3rem;"></span></div>'
+        }
+      </div>
+      <h3 class="game-title">${game.title || 'Untitled Game'}</h3>
+      <p class="game-publisher">${game.publisher || 'Unknown Publisher'}</p>
+      <div class="game-meta">
+        ${isStaffPick ? `<span class="meta-badge staff-pick"><span class="iconify" data-icon="ant-design:star-filled"></span> Staff Pick</span>` : ''}
+        ${playerInfo ? `<span class="meta-badge"><span class="iconify" data-icon="ant-design:team-outlined"></span> ${playerInfo}</span>` : ''}
+        ${timeInfo ? `<span class="meta-badge"><span class="iconify" data-icon="ant-design:clock-circle-outlined"></span> ${timeInfo}</span>` : ''}
+        ${game.rating ? `<span class="meta-badge rating"><span class="iconify" data-icon="ant-design:star-filled"></span> ${game.rating}</span>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+// View matched game details
+function viewMatchedGame() {
+  if (matchedGame) {
+    closeSurveyModal();
+    showGameDetail(matchedGame);
+  }
+}
+
+// Restart survey
+function restartSurvey() {
+  currentQuestionIndex = 0;
+  surveyAnswers = {};
+  matchedGame = null;
+
+  // Reset UI
+  surveyQuestionsContainer.classList.remove('hidden');
+  surveyNavigation.classList.remove('hidden');
+  surveyResult.classList.add('hidden');
+  surveyNoMatch.classList.add('hidden');
+
+  // Clear selections
+  document.querySelectorAll('.survey-option').forEach(opt => opt.classList.remove('selected'));
+
+  // Show first question
+  showQuestion(0);
+}
+
+// Initialize survey when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  // Survey init is called after a short delay to ensure allGames is loaded
+  setTimeout(initSurvey, 100);
 });

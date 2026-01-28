@@ -30,6 +30,11 @@
       placeholder="Search games by name, publisher, theme..."
       class="search-input"
     />
+    <!-- What to Play Button -->
+    <button id="whatToPlayBtn" class="what-to-play-btn">
+      <span class="iconify" data-icon="ant-design:bulb-filled"></span>
+      <span>What to Play?</span>
+    </button>
     <!-- Mobile Filter Toggle Button -->
     <button id="filterToggleBtn" class="filter-toggle-btn">
       <span class="iconify" data-icon="ant-design:filter-outlined"></span>
@@ -304,6 +309,77 @@
   </div>
 
 
+
+  <!-- What to Play Survey Modal -->
+  <div id="surveyModal" class="survey-modal hidden">
+    <div class="survey-modal-content">
+      <button id="closeSurveyModal" class="survey-modal-close">
+        <span class="iconify" data-icon="ant-design:close-outlined"></span>
+      </button>
+
+      <!-- Survey Header -->
+      <div class="survey-header">
+        <span class="iconify survey-header-icon" data-icon="ant-design:bulb-filled"></span>
+        <h2>What Should You Play?</h2>
+        <p>Answer a few questions and we'll find the perfect game for your group!</p>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="survey-progress">
+        <div class="survey-progress-bar" id="surveyProgressBar"></div>
+      </div>
+      <div class="survey-progress-text" id="surveyProgressText">Question 1 of 6</div>
+
+      <!-- Survey Questions Container -->
+      <div id="surveyQuestions" class="survey-questions">
+        <!-- Questions will be dynamically inserted here -->
+      </div>
+
+      <!-- Survey Result Container -->
+      <div id="surveyResult" class="survey-result hidden">
+        <div class="survey-result-header">
+          <span class="iconify" data-icon="ant-design:check-circle-filled"></span>
+          <h3>We Found Your Game!</h3>
+        </div>
+        <div id="surveyResultCard" class="survey-result-card">
+          <!-- Game card will be inserted here -->
+        </div>
+        <div class="survey-result-actions">
+          <button id="viewGameBtn" class="survey-btn-primary">
+            <span class="iconify" data-icon="ant-design:eye-outlined"></span>
+            View Game Details
+          </button>
+          <button id="restartSurveyBtn" class="survey-btn-secondary">
+            <span class="iconify" data-icon="ant-design:reload-outlined"></span>
+            Try Again
+          </button>
+        </div>
+      </div>
+
+      <!-- No Match Result -->
+      <div id="surveyNoMatch" class="survey-no-match hidden">
+        <span class="iconify" data-icon="ant-design:frown-outlined"></span>
+        <h3>No Perfect Match Found</h3>
+        <p>We couldn't find a game that matches all your criteria. Try adjusting your preferences!</p>
+        <button id="restartSurveyBtnNoMatch" class="survey-btn-secondary">
+          <span class="iconify" data-icon="ant-design:reload-outlined"></span>
+          Try Again
+        </button>
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div id="surveyNavigation" class="survey-navigation">
+        <button id="surveyPrevBtn" class="survey-nav-btn" disabled>
+          <span class="iconify" data-icon="ant-design:arrow-left-outlined"></span>
+          Back
+        </button>
+        <button id="surveyNextBtn" class="survey-nav-btn survey-nav-btn-primary">
+          Next
+          <span class="iconify" data-icon="ant-design:arrow-right-outlined"></span>
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Footer -->
   <div class="flex justify-center w-full border-t-2 border-t-(--accent) py-12"></div>
