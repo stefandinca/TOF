@@ -97,6 +97,66 @@
   background: var(--accent);
 }
 
+/* Player Count Range Inputs */
+.player-count-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.range-input-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.range-input-group label {
+  font-size: 0.7rem;
+  color: rgba(247, 224, 203, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.range-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(24, 15, 30, 0.5);
+  color: var(--text);
+  border: 1px solid rgba(88, 10, 205, 0.5);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  outline: none;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.range-input:hover, .range-input:focus {
+  border-color: var(--accent);
+  background: rgba(24, 15, 30, 0.8);
+}
+
+.range-input::placeholder {
+  color: rgba(247, 224, 203, 0.4);
+}
+
+/* Remove spinner arrows from number inputs */
+.range-input::-webkit-outer-spin-button,
+.range-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.range-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.range-separator {
+  color: var(--ui);
+  font-weight: 600;
+  padding-top: 18px;
+}
+
 /* Checkboxes */
 .checkbox-group {
   display: flex;

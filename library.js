@@ -27,7 +27,8 @@ const loading = document.getElementById('loading');
 const noResults = document.getElementById('noResults');
 const resultsCount = document.getElementById('resultsCount');
 const searchInput = document.getElementById('searchInput');
-const playerFilter = document.getElementById('playerFilter');
+const playerMinFilter = document.getElementById('playerMin');
+const playerMaxFilter = document.getElementById('playerMax');
 const modeFilter = document.getElementById('modeFilter');
 const categoryFilter = document.getElementById('categoryFilter');
 const complexityFilter = document.getElementById('complexityFilter');
@@ -40,7 +41,8 @@ const filterOverlay = document.getElementById('filterOverlay');
 const closeFilterOverlayBtn = document.getElementById('closeFilterOverlay');
 const applyFiltersMobileBtn = document.getElementById('applyFiltersMobile');
 const resetFiltersMobileBtn = document.getElementById('resetFiltersMobile');
-const playerFilterMobile = document.getElementById('playerFilterMobile');
+const playerMinMobile = document.getElementById('playerMinMobile');
+const playerMaxMobile = document.getElementById('playerMaxMobile');
 const modeFilterMobile = document.getElementById('modeFilterMobile');
 const categoryFilterMobile = document.getElementById('categoryFilterMobile');
 const complexityFilterMobile = document.getElementById('complexityFilterMobile');
@@ -397,7 +399,8 @@ function syncCheckboxes(type, value, isChecked, fromMobile) {
 function setupEventListeners() {
   // Desktop filters
   searchInput.addEventListener('input', debounce(applyFilters, 300));
-  playerFilter.addEventListener('change', applyFilters);
+  playerMinFilter.addEventListener('input', debounce(applyFilters, 300));
+  playerMaxFilter.addEventListener('input', debounce(applyFilters, 300));
   modeFilter.addEventListener('change', applyFilters);
   categoryFilter.addEventListener('change', applyFilters);
   complexityFilter.addEventListener('change', applyFilters);
@@ -449,7 +452,8 @@ function closeFilterOverlay() {
 
 // Sync mobile filters from current state
 function syncMobileFiltersFromState() {
-  if (playerFilterMobile) playerFilterMobile.value = playerFilter.value;
+  if (playerMinMobile) playerMinMobile.value = playerMinFilter.value;
+  if (playerMaxMobile) playerMaxMobile.value = playerMaxFilter.value;
   if (modeFilterMobile) modeFilterMobile.value = modeFilter.value;
   if (categoryFilterMobile) categoryFilterMobile.value = categoryFilter.value;
   if (complexityFilterMobile) complexityFilterMobile.value = complexityFilter.value;
@@ -459,7 +463,8 @@ function syncMobileFiltersFromState() {
 // Apply mobile filters to desktop and trigger filter
 function applyMobileFilters() {
   // Sync select values from mobile to desktop
-  if (playerFilterMobile) playerFilter.value = playerFilterMobile.value;
+  if (playerMinMobile) playerMinFilter.value = playerMinMobile.value;
+  if (playerMaxMobile) playerMaxFilter.value = playerMaxMobile.value;
   if (modeFilterMobile) modeFilter.value = modeFilterMobile.value;
   if (categoryFilterMobile) categoryFilter.value = categoryFilterMobile.value;
   if (complexityFilterMobile) complexityFilter.value = complexityFilterMobile.value;
@@ -473,7 +478,8 @@ function applyMobileFilters() {
 // Reset mobile filters
 function resetMobileFilters() {
   // Reset mobile selects
-  if (playerFilterMobile) playerFilterMobile.value = '';
+  if (playerMinMobile) playerMinMobile.value = '';
+  if (playerMaxMobile) playerMaxMobile.value = '';
   if (modeFilterMobile) modeFilterMobile.value = '';
   if (categoryFilterMobile) categoryFilterMobile.value = '';
   if (complexityFilterMobile) complexityFilterMobile.value = '';
@@ -499,7 +505,8 @@ function resetMobileFilters() {
 // Apply filters
 function applyFilters() {
   const searchTerm = searchInput.value.toLowerCase().trim();
-  const playerCount = playerFilter.value;
+  const playerMin = parseInt(playerMinFilter.value) || 0;
+  const playerMax = parseInt(playerMaxFilter.value) || 0;
   const mode = modeFilter.value;
   const inventoryCategory = categoryFilter.value;
   const complexity = complexityFilter.value;
@@ -513,24 +520,29 @@ function applyFilters() {
       }
     }
 
-    // Player count filter
-    if (playerCount) {
-      if (playerCount === '1') {
-        if (game.playerCountMin !== 1) return false;
-      } else if (playerCount === '2') {
-        if (!(game.playerCountMin <= 2 && (game.playerCountMax === '2' || parseInt(game.playerCountMax) >= 2))) {
-          return false;
-        }
-      } else if (playerCount === '3-4') {
-        const maxPlayers = parseInt(game.playerCountMax) || 0;
-        if (!(game.playerCountMin <= 4 && maxPlayers >= 3)) {
-          return false;
-        }
-      } else if (playerCount === '5+') {
-        const maxPlayers = parseInt(game.playerCountMax) || 0;
-        if (maxPlayers < 5 && !game.playerCountMax.includes('+')) {
-          return false;
-        }
+    // Player count filter (min/max range)
+    // Logic: Show games that can accommodate the player range specified
+    // - If user sets min=6, game must support at least 6 players (game.playerCountMax >= 6)
+    // - If user sets max=4, game must support playing with 4 or fewer (game.playerCountMin <= 4)
+    if (playerMin > 0 || playerMax > 0) {
+      const gameMin = game.playerCountMin || 0;
+      const gameMaxRaw = game.playerCountMax;
+      // Handle "+" notation (e.g., "10+") - treat as high number
+      let gameMax = 0;
+      if (typeof gameMaxRaw === 'string' && gameMaxRaw.includes('+')) {
+        gameMax = 99; // Treat "+" as unlimited
+      } else {
+        gameMax = parseInt(gameMaxRaw) || gameMin;
+      }
+
+      // If user specified a minimum, game must support at least that many players
+      if (playerMin > 0 && gameMax < playerMin) {
+        return false;
+      }
+
+      // If user specified a maximum, game must be playable with that few players
+      if (playerMax > 0 && gameMin > playerMax) {
+        return false;
       }
     }
 
@@ -625,7 +637,8 @@ function sortGames() {
 // Reset filters
 function resetFilters() {
   searchInput.value = '';
-  playerFilter.value = '';
+  playerMinFilter.value = '';
+  playerMaxFilter.value = '';
   modeFilter.value = '';
   categoryFilter.value = '';
   complexityFilter.value = '';
@@ -1180,18 +1193,12 @@ function filterAndShowList(filterType, filterValue) {
       break;
 
     case 'players':
-      // Map player count to filter value
+      // Set both min and max to the game's min player count to show similar games
       const playerCount = parseInt(filterValue);
-      if (playerCount === 1) {
-        playerFilter.value = '1';
-      } else if (playerCount === 2) {
-        playerFilter.value = '2';
-      } else if (playerCount <= 4) {
-        playerFilter.value = '3-4';
-      } else {
-        playerFilter.value = '5+';
-      }
-      if (playerFilterMobile) playerFilterMobile.value = playerFilter.value;
+      playerMinFilter.value = playerCount;
+      playerMaxFilter.value = '';
+      if (playerMinMobile) playerMinMobile.value = playerCount;
+      if (playerMaxMobile) playerMaxMobile.value = '';
       break;
 
     case 'playtime':

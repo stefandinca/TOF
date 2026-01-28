@@ -51,13 +51,17 @@
         <!-- Player Count -->
         <div class="filter-group">
           <div class="filter-group-title">Player Count</div>
-          <select id="playerFilterMobile" class="filter-select-mobile">
-            <option value="">All Player Counts</option>
-            <option value="1">Solo (1 player)</option>
-            <option value="2">2 players</option>
-            <option value="3-4">3-4 players</option>
-            <option value="5+">5+ players</option>
-          </select>
+          <div class="player-count-range">
+            <div class="range-input-group">
+              <label for="playerMinMobile">Min</label>
+              <input type="number" id="playerMinMobile" class="range-input" min="1" max="20" placeholder="1">
+            </div>
+            <span class="range-separator">-</span>
+            <div class="range-input-group">
+              <label for="playerMaxMobile">Max</label>
+              <input type="number" id="playerMaxMobile" class="range-input" min="1" max="20" placeholder="Any">
+            </div>
+          </div>
         </div>
 
         <!-- Game Mode -->
@@ -153,13 +157,17 @@
         <!-- Player Count -->
         <div class="filter-group">
           <div class="filter-group-title">Player Count</div>
-          <select id="playerFilter" class="filter-select-sidebar">
-            <option value="">All Player Counts</option>
-            <option value="1">Solo (1 player)</option>
-            <option value="2">2 players</option>
-            <option value="3-4">3-4 players</option>
-            <option value="5+">5+ players</option>
-          </select>
+          <div class="player-count-range">
+            <div class="range-input-group">
+              <label for="playerMin">Min</label>
+              <input type="number" id="playerMin" class="range-input" min="1" max="20" placeholder="1">
+            </div>
+            <span class="range-separator">-</span>
+            <div class="range-input-group">
+              <label for="playerMax">Max</label>
+              <input type="number" id="playerMax" class="range-input" min="1" max="20" placeholder="Any">
+            </div>
+          </div>
         </div>
 
         <!-- Game Mode -->
