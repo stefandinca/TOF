@@ -44,13 +44,11 @@ function sleep(ms) {
 }
 
 /**
- * Search for a game on BGG by name
+ * Execute search on BGG and find the best match
  */
-async function searchBGG(gameName) {
-  const query = encodeURIComponent(gameName);
+async function executeSearch(name) {
+  const query = encodeURIComponent(name);
   const url = `${BGG_API_BASE}/search?query=${query}&type=boardgame`;
-
-  console.log(`Searching BGG for: ${gameName}`);
 
   try {
     const response = await fetch(url, {
@@ -68,21 +66,72 @@ async function searchBGG(gameName) {
     const result = await parseXML(xml);
 
     if (result.items && result.items.item && result.items.item.length > 0) {
-      // Return the first match (most relevant)
-      const item = result.items.item[0];
+      const items = result.items.item;
+      
+      // Look for an exact match (case insensitive)
+      const exactMatch = items.find(item => {
+        const bggName = (item.name?.[0]?.$.value || '').toLowerCase();
+        return bggName === name.toLowerCase();
+      });
+
+      if (exactMatch) {
+        return {
+          id: exactMatch.$.id,
+          name: exactMatch.name?.[0]?.$.value,
+          yearPublished: exactMatch.yearpublished?.[0]?.$.value
+        };
+      }
+
+      // If no exact match, return the first one (most relevant according to BGG)
+      const item = items[0];
       return {
         id: item.$.id,
-        name: item.name?.[0]?.$.value || gameName,
+        name: item.name?.[0]?.$.value,
         yearPublished: item.yearpublished?.[0]?.$.value
       };
     }
 
-    console.log(`No results found for: ${gameName}`);
     return null;
   } catch (error) {
-    console.error(`Error searching BGG for ${gameName}:`, error.message);
+    console.error(`Error searching BGG for ${name}:`, error.message);
     return null;
   }
+}
+
+/**
+ * Search for a game on BGG by name with fallback strategies
+ */
+async function searchBGG(gameName) {
+  console.log(`Searching BGG for: ${gameName}`);
+
+  // Strategy 1: Full name
+  let result = await executeSearch(gameName);
+  
+  // Strategy 2: Strip parentheses (e.g., "Aeon's End (Second Edition)" -> "Aeon's End")
+  if (!result && gameName.includes('(')) {
+    const cleaned = gameName.replace(/\([^)]*\)/g, '').trim();
+    if (cleaned && cleaned !== gameName) {
+      console.log(`Retrying search with cleaned name: ${cleaned}`);
+      await sleep(2000); // Small delay between retries
+      result = await executeSearch(cleaned);
+    }
+  }
+
+  // Strategy 3: Strip after colon (e.g., "Catan: Seafarers" -> "Catan")
+  if (!result && gameName.includes(':')) {
+    const cleaned = gameName.split(':')[0].trim();
+    if (cleaned && cleaned !== gameName) {
+      console.log(`Retrying search with base name: ${cleaned}`);
+      await sleep(2000); // Small delay between retries
+      result = await executeSearch(cleaned);
+    }
+  }
+
+  if (!result) {
+    console.log(`No results found for: ${gameName}`);
+  }
+
+  return result;
 }
 
 /**
@@ -225,30 +274,70 @@ async function fetchGameDetails(bggId) {
 
 /**
  * Update a game in Firestore with BGG data
+ * Only updates fields that are currently empty/missing - preserves existing data
  */
 async function updateGameWithBGGData(gameId, bggData) {
   try {
+    // Fetch existing game data first
+    const gameRef = db.collection('games').doc(gameId);
+    const existingDoc = await gameRef.get();
+    const existingData = existingDoc.exists ? existingDoc.data() : {};
+
+    // Helper to check if a field is empty/missing
+    const isEmpty = (value) => {
+      if (value === undefined || value === null || value === '') return true;
+      if (Array.isArray(value) && value.length === 0) return true;
+      return false;
+    };
+
     const updateData = {};
 
-    // Add BGG data if available
-    if (bggData.description) updateData.description = bggData.description;
-    if (bggData.imageUrl) updateData.imageUrl = bggData.imageUrl;
-    if (bggData.thumbnailUrl) updateData.thumbnailUrl = bggData.thumbnailUrl;
-    if (bggData.images && bggData.images.length > 0) updateData.images = bggData.images;
-    if (bggData.rating) updateData.rating = bggData.rating;
-    if (bggData.complexity) updateData.complexity = bggData.complexity;
-    if (bggData.bggId) updateData.bggId = bggData.bggId;
-    if (bggData.yearPublished) updateData.yearPublished = bggData.yearPublished;
-    if (bggData.categories && bggData.categories.length > 0) updateData.categories = bggData.categories;
-    if (bggData.mechanics && bggData.mechanics.length > 0) updateData.mechanics = bggData.mechanics;
-    if (bggData.bggRank) updateData.bggRank = bggData.bggRank;
-    if (bggData.recommendedPlayers) updateData.recommendedPlayers = bggData.recommendedPlayers;
+    // Only add BGG data for fields that are currently empty in Firestore
+    if (bggData.description && isEmpty(existingData.description)) {
+      updateData.description = bggData.description;
+    }
+    if (bggData.imageUrl && isEmpty(existingData.imageUrl)) {
+      updateData.imageUrl = bggData.imageUrl;
+    }
+    if (bggData.thumbnailUrl && isEmpty(existingData.thumbnailUrl)) {
+      updateData.thumbnailUrl = bggData.thumbnailUrl;
+    }
+    if (bggData.images && bggData.images.length > 0 && isEmpty(existingData.images)) {
+      updateData.images = bggData.images;
+    }
+    if (bggData.rating && isEmpty(existingData.rating)) {
+      updateData.rating = bggData.rating;
+    }
+    if (bggData.complexity && isEmpty(existingData.complexity)) {
+      updateData.complexity = bggData.complexity;
+    }
+    if (bggData.bggId && isEmpty(existingData.bggId)) {
+      updateData.bggId = bggData.bggId;
+    }
+    if (bggData.yearPublished && isEmpty(existingData.yearPublished)) {
+      updateData.yearPublished = bggData.yearPublished;
+    }
+    if (bggData.categories && bggData.categories.length > 0 && isEmpty(existingData.categories)) {
+      updateData.categories = bggData.categories;
+    }
+    if (bggData.mechanics && bggData.mechanics.length > 0 && isEmpty(existingData.mechanics)) {
+      updateData.mechanics = bggData.mechanics;
+    }
+    if (bggData.bggRank && isEmpty(existingData.bggRank)) {
+      updateData.bggRank = bggData.bggRank;
+    }
+    if (bggData.recommendedPlayers && isEmpty(existingData.recommendedPlayers)) {
+      updateData.recommendedPlayers = bggData.recommendedPlayers;
+    }
 
-    // Only update player count and play time if not already set
-    // (prefer manual data over BGG data for these fields)
+    // Only update if there's something to update
+    if (Object.keys(updateData).length === 0) {
+      console.log(`⏭️  Skipped ${gameId} - all fields already populated`);
+      return true;
+    }
 
-    await db.collection('games').doc(gameId).update(updateData);
-    console.log(`✅ Updated game ${gameId} with BGG data`);
+    await gameRef.update(updateData);
+    console.log(`✅ Updated game ${gameId} with BGG data (${Object.keys(updateData).length} fields)`);
 
     return true;
   } catch (error) {

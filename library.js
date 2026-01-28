@@ -30,6 +30,7 @@ const searchInput = document.getElementById('searchInput');
 const playerFilter = document.getElementById('playerFilter');
 const modeFilter = document.getElementById('modeFilter');
 const categoryFilter = document.getElementById('categoryFilter');
+const complexityFilter = document.getElementById('complexityFilter');
 const sortSelect = document.getElementById('sortSelect');
 const resetFiltersBtn = document.getElementById('resetFilters');
 
@@ -42,6 +43,7 @@ const resetFiltersMobileBtn = document.getElementById('resetFiltersMobile');
 const playerFilterMobile = document.getElementById('playerFilterMobile');
 const modeFilterMobile = document.getElementById('modeFilterMobile');
 const categoryFilterMobile = document.getElementById('categoryFilterMobile');
+const complexityFilterMobile = document.getElementById('complexityFilterMobile');
 const sortSelectMobile = document.getElementById('sortSelectMobile');
 
 // Checkbox search elements
@@ -398,6 +400,7 @@ function setupEventListeners() {
   playerFilter.addEventListener('change', applyFilters);
   modeFilter.addEventListener('change', applyFilters);
   categoryFilter.addEventListener('change', applyFilters);
+  complexityFilter.addEventListener('change', applyFilters);
   sortSelect.addEventListener('change', () => {
     sortGames();
     renderGames();
@@ -449,6 +452,7 @@ function syncMobileFiltersFromState() {
   if (playerFilterMobile) playerFilterMobile.value = playerFilter.value;
   if (modeFilterMobile) modeFilterMobile.value = modeFilter.value;
   if (categoryFilterMobile) categoryFilterMobile.value = categoryFilter.value;
+  if (complexityFilterMobile) complexityFilterMobile.value = complexityFilter.value;
   if (sortSelectMobile) sortSelectMobile.value = sortSelect.value;
 }
 
@@ -458,6 +462,7 @@ function applyMobileFilters() {
   if (playerFilterMobile) playerFilter.value = playerFilterMobile.value;
   if (modeFilterMobile) modeFilter.value = modeFilterMobile.value;
   if (categoryFilterMobile) categoryFilter.value = categoryFilterMobile.value;
+  if (complexityFilterMobile) complexityFilter.value = complexityFilterMobile.value;
   if (sortSelectMobile) sortSelect.value = sortSelectMobile.value;
 
   // Apply filters
@@ -471,6 +476,7 @@ function resetMobileFilters() {
   if (playerFilterMobile) playerFilterMobile.value = '';
   if (modeFilterMobile) modeFilterMobile.value = '';
   if (categoryFilterMobile) categoryFilterMobile.value = '';
+  if (complexityFilterMobile) complexityFilterMobile.value = '';
   if (sortSelectMobile) sortSelectMobile.value = 'title';
 
   // Reset mobile checkboxes
@@ -496,6 +502,7 @@ function applyFilters() {
   const playerCount = playerFilter.value;
   const mode = modeFilter.value;
   const inventoryCategory = categoryFilter.value;
+  const complexity = complexityFilter.value;
 
   filteredGames = allGames.filter(game => {
     // Search filter
@@ -538,6 +545,23 @@ function applyFilters() {
     // Inventory category filter (Base Game / Expansion)
     if (inventoryCategory) {
       if (game.inventoryCategory !== inventoryCategory) {
+        return false;
+      }
+    }
+
+    // Complexity filter
+    if (complexity) {
+      const gameComplexity = parseFloat(game.complexity);
+      if (isNaN(gameComplexity)) {
+        return false; // No complexity data, exclude from filtered results
+      }
+      if (complexity === 'light' && (gameComplexity < 1 || gameComplexity >= 2)) {
+        return false;
+      } else if (complexity === 'medium-light' && (gameComplexity < 2 || gameComplexity >= 3)) {
+        return false;
+      } else if (complexity === 'medium' && (gameComplexity < 3 || gameComplexity >= 4)) {
+        return false;
+      } else if (complexity === 'heavy' && gameComplexity < 4) {
         return false;
       }
     }
@@ -604,6 +628,7 @@ function resetFilters() {
   playerFilter.value = '';
   modeFilter.value = '';
   categoryFilter.value = '';
+  complexityFilter.value = '';
   sortSelect.value = 'title';
 
   // Reset categories and mechanics
