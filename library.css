@@ -1426,6 +1426,15 @@
   gap: 12px;
 }
 
+.survey-result-secondary-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.survey-result-secondary-actions .survey-btn-secondary {
+  flex: 1;
+}
+
 .survey-btn-primary {
   display: inline-flex;
   align-items: center;
@@ -1615,6 +1624,10 @@
   .survey-nav-btn {
     justify-content: center;
     width: 100%;
+  }
+
+  .survey-result-secondary-actions {
+    flex-direction: column;
   }
 }
 

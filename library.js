@@ -1416,6 +1416,8 @@ const surveyQuestions = [
 let currentQuestionIndex = 0;
 let surveyAnswers = {};
 let matchedGame = null;
+let matchedGamesPool = [];
+let currentMatchIndex = 0;
 
 // Survey DOM Elements
 const surveyModal = document.getElementById('surveyModal');
@@ -1431,6 +1433,7 @@ const surveyNoMatch = document.getElementById('surveyNoMatch');
 const surveyNavigation = document.getElementById('surveyNavigation');
 const surveyResultCard = document.getElementById('surveyResultCard');
 const viewGameBtn = document.getElementById('viewGameBtn');
+const showAnotherBtn = document.getElementById('showAnotherBtn');
 const restartSurveyBtn = document.getElementById('restartSurveyBtn');
 const restartSurveyBtnNoMatch = document.getElementById('restartSurveyBtnNoMatch');
 
@@ -1443,6 +1446,7 @@ function initSurvey() {
   surveyPrevBtn.addEventListener('click', goToPreviousQuestion);
   surveyNextBtn.addEventListener('click', goToNextQuestion);
   viewGameBtn.addEventListener('click', viewMatchedGame);
+  showAnotherBtn.addEventListener('click', showAnotherMatch);
   restartSurveyBtn.addEventListener('click', restartSurvey);
   restartSurveyBtnNoMatch.addEventListener('click', restartSurvey);
 
@@ -1590,13 +1594,27 @@ function findMatchingGame() {
     .sort((a, b) => b.score - a.score);
 
   if (scoredGames.length > 0) {
-    // Pick randomly from top 5 matches for variety
-    const topMatches = scoredGames.slice(0, Math.min(5, scoredGames.length));
-    const randomIndex = Math.floor(Math.random() * topMatches.length);
-    matchedGame = topMatches[randomIndex].game;
+    // Get the top score and find all games within 15 points of it
+    const topScore = scoredGames[0].score;
+    const scoreThreshold = 15;
+    const topMatches = scoredGames.filter(item => item.score >= topScore - scoreThreshold);
+
+    // Shuffle the top matches for randomization
+    for (let i = topMatches.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [topMatches[i], topMatches[j]] = [topMatches[j], topMatches[i]];
+    }
+
+    // Store the pool of matches
+    matchedGamesPool = topMatches.map(item => item.game);
+    currentMatchIndex = 0;
+    matchedGame = matchedGamesPool[0];
 
     // Show result
     showSurveyResult(matchedGame);
+
+    // Update "Show Another" button visibility
+    updateShowAnotherButton();
   } else {
     // No match found
     surveyNoMatch.classList.remove('hidden');
@@ -1759,11 +1777,39 @@ function viewMatchedGame() {
   }
 }
 
+// Show another match from the pool
+function showAnotherMatch() {
+  if (matchedGamesPool.length <= 1) return;
+
+  // Move to next game in pool, wrap around if at end
+  currentMatchIndex = (currentMatchIndex + 1) % matchedGamesPool.length;
+  matchedGame = matchedGamesPool[currentMatchIndex];
+
+  // Update the displayed result
+  showSurveyResult(matchedGame);
+  updateShowAnotherButton();
+}
+
+// Update the "Show Another" button text/state
+function updateShowAnotherButton() {
+  if (matchedGamesPool.length <= 1) {
+    showAnotherBtn.style.display = 'none';
+  } else {
+    showAnotherBtn.style.display = 'inline-flex';
+    showAnotherBtn.innerHTML = `
+      <span class="iconify" data-icon="ant-design:swap-outlined"></span>
+      Show Another (${currentMatchIndex + 1}/${matchedGamesPool.length})
+    `;
+  }
+}
+
 // Restart survey
 function restartSurvey() {
   currentQuestionIndex = 0;
   surveyAnswers = {};
   matchedGame = null;
+  matchedGamesPool = [];
+  currentMatchIndex = 0;
 
   // Reset UI
   surveyQuestionsContainer.classList.remove('hidden');
